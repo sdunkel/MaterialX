@@ -1,0 +1,39 @@
+name: build_wasm
+
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+
+jobs:
+  build_wasm:
+
+    strategy:
+      fail-fast: false
+
+    runs-on: ubuntu_latest
+
+    env:
+      config: Release
+
+    steps:
+    - name: Sync Repository
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Docker login
+      run: echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin       
+
+    - name: Docker start emscripten
+      run: docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:1.39.7-upstream bash
+  
+    - name: Create Build Directory
+      run: mkdir build
+      
+    - name: CMake Build
+      run:  docker exec -it emscripten sh -c "cmake .. -DMATERIALX_BUILD_JS=ON -DMATERIALX_BUILD_RENDER=OFF -DMATERIALX_BUILD_TESTS=OFF -DMATERIALX_BUILD_GEN_GLSL=OFF -DMATERIALX_BUILD_GEN_OSL=OFF -DMATERIALX_BUILD_GEN_OGSXML=OFF -DMATERIALX_BUILD_GEN_OGSFX=OFF -DMATERIALX_BUILD_GEN_ARNOLD=OFF -DMATERIALX_BUILD_CROSS=OFF -DMATERIALX_BUILD_RUNTIME=OFF -DMATERIALX_BUILD_PYTHON=OFF -DMATERIALX_BUILD_DOCS=OFF -DCMAKE_CXX_FLAGS='-std=c++17' -DMATERIALX_EMSDK_PATH=/emsdk_portable/ && cmake --build . --target install && cd ../source/JsMaterialX/test && npm install && npm run test"
+      working-directory: build
