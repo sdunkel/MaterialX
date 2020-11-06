@@ -50,11 +50,8 @@ jobs:
     with: 
        node-version: '12'
 
-  - name: Setup Test
-     run: npm install
-     working-directory: source/JsMaterialX/test
-
   - name: Run Test
-     run: npm run test
-     working-directory: source/JsMaterialX/test
+    run: npm install
+    run: npm run test
+    working-directory: source/JsMaterialX/test
  
