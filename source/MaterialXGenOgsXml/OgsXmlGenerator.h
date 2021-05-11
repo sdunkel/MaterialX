@@ -38,8 +38,13 @@ public:
     static const string OUTPUT_NAME;
     static const string VP_TRANSPARENCY_NAME;
 
+    /// Use Maya's latest external light functions
+    static bool useExternalLightFunctions();
+    static void setUseExternalLightFunctions(bool);
+
 private:
     static const string SAMPLER_SUFFIX;
+    static bool sUseExternalLightFunctions;
 };
 
 }

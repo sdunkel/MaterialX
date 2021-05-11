@@ -23,7 +23,9 @@ class SurfaceNodeGlsl : public GlslImplementation
 
     void emitFunctionCall(const ShaderNode& node, GenContext& context, ShaderStage& stage) const override;
 
-  private:
+    virtual void emitLightLoop(const ShaderNode& node, GenContext& context, ShaderStage& stage, const string& outColor) const;
+
+  protected:
     /// Closure contexts for calling closure functions.
     HwClosureContextPtr _callReflection;
     HwClosureContextPtr _callTransmission;

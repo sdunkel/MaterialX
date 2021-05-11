@@ -480,4 +480,14 @@ string OgsXmlGenerator::generateLightRig(
     return stream.str();
 }
 
+bool OgsXmlGenerator::sUseExternalLightFunctions = false;
+
+bool OgsXmlGenerator::useExternalLightFunctions() {
+    return sUseExternalLightFunctions;
+}
+void OgsXmlGenerator::setUseExternalLightFunctions(bool val) {
+    sUseExternalLightFunctions = val;
+}
+
+
 } // namespace MaterialX
