@@ -31,6 +31,7 @@ template <class T> using enable_if_std_vector_t =
 template <class T> void stringToData(const string& str, T& data)
 {
     std::stringstream ss(str);
+    ss.imbue(std::locale::classic());
     if (!(ss >> data))
     {
         throw ExceptionTypeError("Type mismatch in generic stringToData: " + str);
@@ -94,7 +95,7 @@ template <class T> void stringToData(const string& str, enable_if_std_vector_t<T
 template <class T> void dataToString(const T& data, string& str)
 {
     std::stringstream ss;
-
+    ss.imbue(std::locale::classic());
     // Set float format and precision for the stream
     const Value::FloatFormat fmt = Value::getFloatFormat();
     ss.setf(std::ios_base::fmtflags(
@@ -271,11 +272,11 @@ template <class T> class ValueRegistry
 template <> const string TypedValue<T>::TYPE = name;                                            \
 template <> const string& TypedValue<T>::getTypeString() const { return TYPE; }                 \
 template <> string TypedValue<T>::getValueString() const { return toValueString<T>(_data); }    \
-template bool Value::isA<T>() const;                                                            \
-template const T& Value::asA<T>() const;                                                        \
-template const string& getTypeString<T>();                                                      \
-template string toValueString(const T& data);                                                   \
-template T fromValueString(const string& value);                                                \
+template MX_CORE_API bool Value::isA<T>() const;                                                \
+template MX_CORE_API const T& Value::asA<T>() const;                                            \
+template MX_CORE_API const string& getTypeString<T>();                                          \
+template MX_CORE_API string toValueString(const T& data);                                       \
+template MX_CORE_API T fromValueString(const string& value);                                    \
 ValueRegistry<T> registry##T;
 
 // Base types

@@ -142,7 +142,8 @@ RtPrim RtStage::createNodeDef(RtPrim nodegraphPrim,
                               const RtIdentifier& version,
                               bool isDefaultVersion,
                               const RtIdentifier& nodeGroup,
-                              const RtIdentifier& namespaceString)
+                              const RtIdentifier& namespaceString,
+                              const string& doc)
 {
     // Must have a nodedef name and a node name
     if (nodeDefName == EMPTY_IDENTIFIER || nodeName == EMPTY_IDENTIFIER)
@@ -183,12 +184,17 @@ RtPrim RtStage::createNodeDef(RtPrim nodegraphPrim,
         nodedef.setNodeGroup(nodeGroup);
     }
 
+    if (doc != EMPTY_IDENTIFIER) {
+        nodedef.setDoc(doc);
+    }
+
     RtNodeGraph nodegraph(nodegraphPrim);
 
     // Add an input per nodegraph input
     for (RtInput input : nodegraph.getInputs())
     {
-        RtInput nodedefInput = nodedef.createInput(input.getName(), input.getType());
+        const uint32_t flags = PvtObject::cast<PvtInput>(input)->getFlags();
+        RtInput nodedefInput = nodedef.createInput(input.getName(), input.getType(), flags);
         PvtObject *src = PvtObject::cast(input);
         for (const RtIdentifier& name : src->getAttributeNames())
         {
@@ -196,7 +202,6 @@ RtPrim RtStage::createNodeDef(RtPrim nodegraphPrim,
             RtTypedValue* destAttr = nodedefInput.createAttribute(name, srcAttr->getType());
             RtValue::copy(srcAttr->getType(), srcAttr->getValue(), destAttr->getValue());
         }
-        nodedefInput.setIsToken(input.isToken());
         RtValue::copy(input.getType(), input.getValue(), nodedefInput.getValue());
     }
 

@@ -6,6 +6,7 @@
 #include <MaterialXFormat/XmlIo.h>
 
 #include <MaterialXFormat/PugiXML/pugixml.hpp>
+#include <MaterialXFormat/Util.h>
 
 #include <MaterialXCore/Types.h>
 
@@ -55,7 +56,14 @@ void elementFromXml(const xml_node& xmlNode, ElementPtr elem, const XmlReadOptio
         ConstElementPtr previous = elem->getChild(name);
         if (previous)
         {
-            continue;
+            if (!readOptions || !readOptions->generateUniqueNames)
+            {
+                continue;
+            }
+            else
+            {
+                name = elem->createValidChildName(name);
+            }
         }
 
         // Create the new element.
@@ -258,6 +266,14 @@ unsigned int getParseOptions(const XmlReadOptions* readOptions)
     return parseOptions;
 }
 
+void mergeLooks(DocumentPtr doc, const XmlExportOptions* exportOptions)
+{
+    if (exportOptions && exportOptions->mergeLooks)
+    {
+        doc->mergeLooks(exportOptions->lookGroupToMerge);
+    }
+}
+
 } // anonymous namespace
 
 //
@@ -276,6 +292,16 @@ XmlReadOptions::XmlReadOptions() :
 
 XmlWriteOptions::XmlWriteOptions() :
     writeXIncludeEnable(true)
+{
+}
+
+//
+// XmlExportOptions methods
+//
+
+XmlExportOptions::XmlExportOptions() :
+    XmlWriteOptions(),
+    mergeLooks(false)
 {
 }
 
@@ -353,6 +379,36 @@ string writeToXmlString(DocumentPtr doc, const XmlWriteOptions* writeOptions)
     std::ostringstream stream;
     writeToXmlStream(doc, stream, writeOptions);
     return stream.str();
+}
+
+void exportToXmlStream(DocumentPtr doc, std::ostream& stream, const XmlExportOptions* exportOptions)
+{
+    mergeLooks(doc, exportOptions);
+    if (exportOptions && exportOptions->flattenFilenames)
+    {
+        flattenFilenames(doc, exportOptions->imageSearchPath, exportOptions->stringResolver);
+    }
+    writeToXmlStream(doc, stream, exportOptions);
+}
+
+void exportToXmlFile(DocumentPtr doc, const FilePath& filename, const XmlExportOptions* exportOptions)
+{
+    mergeLooks(doc, exportOptions);
+    if (exportOptions && exportOptions->flattenFilenames)
+    {
+        flattenFilenames(doc, exportOptions->imageSearchPath, exportOptions->stringResolver);
+    }
+    writeToXmlFile(doc, filename, exportOptions);
+}
+
+string exportToXmlString(DocumentPtr doc, const XmlExportOptions* exportOptions)
+{
+    mergeLooks(doc, exportOptions);
+    if (exportOptions && exportOptions->flattenFilenames)
+    {
+        flattenFilenames(doc, exportOptions->imageSearchPath, exportOptions->stringResolver);
+    }
+    return writeToXmlString(doc, exportOptions);
 }
 
 void prependXInclude(DocumentPtr doc, const FilePath& filename)

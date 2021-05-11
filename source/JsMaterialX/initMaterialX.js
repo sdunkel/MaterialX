@@ -56,8 +56,8 @@ function argGen(args, defaultArgs = []) {
 
 function catchPtrError(func, handle, args, defaultArgs) {
     var funcName = func.name;
+    var args1 = argGen(args, defaultArgs);
     try {
-        var args1 = argGen(args, defaultArgs);
         return func.apply(handle, args1);
     } catch (exception) {
         throw new Error(`${funcName}: ${Module.getExceptionMessage(exception)}`);
@@ -101,7 +101,11 @@ function wrapperFactory(klass, funcArgOverride = {}) {
         var funcName = funcNames[parseInt(i)];
         var apiFunc = proto[String(funcName)];
         var defaultArgs = funcArgOverride[String(funcName)];
-        proto[String(funcName)] = wrapperFunction(apiFunc, defaultArgs);
+        var wrapperFunc = wrapperFunction(apiFunc, defaultArgs);
+        for (const [key, value] of Object.entries(apiFunc)) {
+            wrapperFunc[key] = value;
+        }
+        proto[String(funcName)] = wrapperFunc;
     }
     return klass;
 }

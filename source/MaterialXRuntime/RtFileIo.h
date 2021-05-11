@@ -25,6 +25,7 @@ class RtReadOptions
 {
   public:
     using ElementFilter = std::function<bool(const ElementPtr& elem)>;
+    using LookModifier = std::function<DocumentPtr(const DocumentPtr& stageDoc, const DocumentPtr& loadedDoc)>;
 
   public:
     RtReadOptions();
@@ -33,6 +34,9 @@ class RtReadOptions
     /// Filter function type used for filtering elements during read.
     /// If the filter returns false the element will not be read.
     ElementFilter elementFilter;
+
+    /// Callback function for modifying the look information.
+    LookModifier lookModifier;
 
     /// Read look information. The default value is false.
     bool readLookInformation;
@@ -78,6 +82,30 @@ class RtWriteOptions
     unsigned int desiredMinorVersion;
 };
 
+/// @class RtExportOptions
+/// A set of options for controlling the behavior of export.
+class RtExportOptions : public RtWriteOptions
+{
+  public:
+    RtExportOptions();
+
+    ~RtExportOptions() { }
+
+    /// Whether to merge all of the looks/lookgroups into a single look
+    bool mergeLooks;
+
+    /// The name of the lookgroup to merge
+    std::string lookGroupToMerge;
+
+    /// Whether to flatten filenames
+    bool flattenFilenames;
+
+    /// Search path used for flattening filenames
+    FileSearchPath imageSearchPath;
+
+    /// String resolver applied during flattening filenames
+    StringResolverPtr stringResolver;
+};
 
 /// API for read and write of data from MaterialX files
 /// to runtime stages.
@@ -124,6 +152,12 @@ public:
 
     /// Write a prim to a stream.
     void writePrim(std::ostream& stream, const RtPath& primPath, const RtWriteOptions* options = nullptr);
+
+    // Export to a stream
+    void exportDocument(std::ostream& stream, const RtExportOptions* options = nullptr);
+
+    // Export to a document
+    void exportDocument(const FilePath& documentPath, const RtExportOptions* options = nullptr);
 
 private:
     /// Read all contents from a file or folder into the attached stage.

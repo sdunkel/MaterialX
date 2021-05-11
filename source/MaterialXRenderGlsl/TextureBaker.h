@@ -13,6 +13,8 @@
 
 #include <MaterialXCore/Unit.h>
 
+#include <MaterialXRenderGlsl/Export.h>
+
 #include <MaterialXRenderGlsl/GlslRenderer.h>
 #include <MaterialXRenderGlsl/GLTextureHandler.h>
 
@@ -31,7 +33,7 @@ using BakedDocumentVec = std::vector<std::pair<std::string, DocumentPtr>>;
 /// A helper class for baking procedural material content to textures.
 /// TODO: Add support for graphs containing geometric nodes such as position
 ///       and normal.
-class TextureBaker : public GlslRenderer
+class MX_RENDERGLSL_API TextureBaker : public GlslRenderer
 {
   public:
     static TextureBakerPtr create(unsigned int width = 1024, unsigned int height = 1024, Image::BaseType baseType = Image::BaseType::UINT8)
@@ -187,6 +189,19 @@ class TextureBaker : public GlslRenderer
         return _hashImageNames;
     }
 
+    /// Set the min and max UV values for the geometry used for texture baking 
+    /// By default it is a screen quad with UV (0,0) - (1,1)
+    void setTextureSpace(Vector2 uvMin, Vector2 uvMax)
+    {
+        _textureSpace = std::make_pair(uvMin, uvMax);
+    }
+
+    /// Get the min and max UV values for the baking texture space
+    std::pair<Vector2, Vector2> getTextureSpace() const
+    {
+        return _textureSpace;
+    }
+
     /// Set up the unit definitions to be used in baking.
     void setupUnitSystem(DocumentPtr unitDefinitions);
 
@@ -249,6 +264,7 @@ class TextureBaker : public GlslRenderer
     std::ostream* _outputStream;
     bool _autoTextureResolution;
     bool _hashImageNames;
+    std::pair<Vector2, Vector2> _textureSpace;
 
     ShaderGeneratorPtr _generator;
     ConstNodePtr _material;

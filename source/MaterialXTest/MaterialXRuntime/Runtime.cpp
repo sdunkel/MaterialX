@@ -221,12 +221,6 @@ TEST_CASE("Runtime: Values", "[runtime]")
     mx::RtValue v4 = vector4;
     REQUIRE(v4.asVector4()[0] == 4.0f);
 
-    mx::RtValue ptr;
-    ptr.asPtr() = &vector4;
-    REQUIRE(ptr.asPtr() == &vector4);
-    ptr.clear();
-    REQUIRE(ptr.asPtr() == (void*)0);
-
     // Test creating large values.
     // An stage is needed to take ownership of allocated data.
     mx::RtStagePtr stage = api->createStage(MAIN);
@@ -241,6 +235,15 @@ TEST_CASE("Runtime: Values", "[runtime]")
     REQUIRE(mtx33.asMatrix33().isEquivalent(testmatrix, 1e-6f));
     mtx33.asMatrix33()[0][0] = 42.0f;
     REQUIRE(!mtx33.asMatrix33().isEquivalent(testmatrix, 1e-6f));
+
+#ifndef NDEBUG
+    // Test referencing a typed value with the wrong type.
+    // Should throw in debug builds where type check is done.
+    mx::RtTypedValue tval(mx::RtType::COLOR3, color3);
+    REQUIRE_THROWS(tval.asBool());
+    REQUIRE_THROWS(tval.asString());
+    REQUIRE_NOTHROW(tval.asColor3());
+#endif
 
     // Test unmarshalling values from string representations.
     // For small values (<=16byts) the same value instance can be reused
@@ -924,11 +927,12 @@ TEST_CASE("Runtime: NodeGraphs", "[runtime]")
     const mx::RtIdentifier ADDGRAPH_TARGET("mytarget");
     const mx::RtIdentifier NAMESPACE("namespace1");
     const mx::RtIdentifier QUALIFIED_DEFINITION("namespace1:ND_addgraph");
+    const std::string DOC("Sample documentation string");
     bool isDefaultVersion = false;
     stage->renamePrim(graph1.getPath(), NG_ADDGRAPH);
     REQUIRE(!api->hasDefinition<mx::RtNodeDef>(ND_ADDGRAPH));
     REQUIRE(!api->hasImplementation<mx::RtNodeGraph>(NG_ADDGRAPH));
-    mx::RtPrim addgraphPrim = stage->createNodeDef(graph1.getPrim(), ND_ADDGRAPH, ADDGRAPH, ADDGRAPH_VERSION, isDefaultVersion, MATH_GROUP, NAMESPACE);
+    mx::RtPrim addgraphPrim = stage->createNodeDef(graph1.getPrim(), ND_ADDGRAPH, ADDGRAPH, ADDGRAPH_VERSION, isDefaultVersion, MATH_GROUP, NAMESPACE, DOC);
     api->registerDefinition<mx::RtNodeDef>(addgraphPrim);
     api->registerImplementation<mx::RtNodeGraph>(graph1.getPrim());
     REQUIRE(api->hasDefinition<mx::RtNodeDef>(QUALIFIED_DEFINITION));
@@ -949,6 +953,7 @@ TEST_CASE("Runtime: NodeGraphs", "[runtime]")
     REQUIRE(addgraphDef.getNode() == ADDGRAPH);
     REQUIRE(addgraphDef.getNodeGroup() == MATH_GROUP);
     REQUIRE(addgraphDef.getVersion() == ADDGRAPH_VERSION);
+    REQUIRE(addgraphDef.getDoc() == DOC);
     REQUIRE_FALSE(addgraphDef.getIsDefaultVersion());
     addgraphDef.setTarget(ADDGRAPH_TARGET);
     REQUIRE(addgraphDef.getTarget() == ADDGRAPH_TARGET);
@@ -1308,13 +1313,14 @@ TEST_CASE("Runtime: FileIo NodeGraph", "[runtime]")
     // Create a nodegraph.
     mx::RtNodeGraph graph = stage->createPrim(mx::RtNodeGraph::typeName());
     graph.createInput(IN, mx::RtType::FLOAT);
-    graph.createInput(TOKEN1, mx::RtType::FLOAT, mx::RtPortFlag::UNIFORM | mx::RtPortFlag::TOKEN);
+    graph.createInput(TOKEN1, mx::RtType::FLOAT, mx::RtPortFlag::TOKEN);
     graph.createOutput(OUT, mx::RtType::FLOAT);
     mx::RtInput graphIn = graph.getInput(IN);
     REQUIRE(graphIn.isUIVisible());
     graphIn.setIsUIVisible(false);
     REQUIRE(!graphIn.isUIVisible());
     mx::RtInput graphToken = graph.getInput(TOKEN1);
+    REQUIRE(graphToken.isToken());
     REQUIRE(graphToken.isUniform());
     mx::RtOutput graphOut = graph.getOutput(OUT);
     mx::RtOutput graphInSocket = graph.getInputSocket(IN);
@@ -1331,16 +1337,13 @@ TEST_CASE("Runtime: FileIo NodeGraph", "[runtime]")
     const mx::RtIdentifier ADD_FLOAT_NODEDEF("ND_add_float");
     mx::RtNode add1 = stage->createPrim(graph.getPath(), NONAME, ADD_FLOAT_NODEDEF);
     mx::RtNode add2 = stage->createPrim(graph.getPath(), NONAME, ADD_FLOAT_NODEDEF);
-    try {
-        graphTokenSocket.connect(add1.getInput(IN1));
-    }
-    catch (mx::Exception&)
-    {
-    }
-    REQUIRE(!graphTokenSocket.isConnected());
     graphInSocket.connect(add1.getInput(IN1));
     add1.getOutput(OUT).connect(add2.getInput(IN1));
     add2.getOutput(OUT).connect(graphOutSocket);
+
+    // Try connecting a token.
+    REQUIRE_THROWS(graphTokenSocket.connect(add1.getInput(IN2)));
+    REQUIRE(!graphTokenSocket.isConnected());
 
     // Add an unconnected node.
     stage->createPrim(graph.getPath(), NONAME, ADD_FLOAT_NODEDEF);
@@ -2461,7 +2464,7 @@ TEST_CASE("Runtime: Commands", "[runtime]")
     mx::RtCommand::setAttributeFromString(foo, metadata, metadataValue, attrResult);
     REQUIRE(attrResult);
     REQUIRE(foo.getAttribute(metadata));
-    REQUIRE(foo.getAttribute(metadata)->asIdentifier() == metadataValue);
+    REQUIRE(foo.getAttribute(metadata)->asString() == metadataValue);
     REQUIRE(setAttributeCount == 1);
     REQUIRE(removeAttributeCount == 0);
 
@@ -2474,7 +2477,7 @@ TEST_CASE("Runtime: Commands", "[runtime]")
     mx::RtCommand::redo(result);
     REQUIRE(result);
     REQUIRE(foo.getAttribute(metadata));
-    REQUIRE(foo.getAttribute(metadata)->asIdentifier() == metadataValue);
+    REQUIRE(foo.getAttribute(metadata)->asString() == metadataValue);
     REQUIRE(setAttributeCount == 2);
     REQUIRE(removeAttributeCount == 1);
 
@@ -2721,3 +2724,55 @@ TEST_CASE("Runtime: duplicate name", "[runtime]")
     REQUIRE(graph1.getOutputSocket(ADD5));
     REQUIRE(duplicateCount(ADD5) == 1);
 }
+
+
+TEST_CASE("Export", "[runtime]")
+{
+    mx::RtScopedApiHandle api;
+    mx::FileSearchPath searchPath(mx::FilePath::getCurrentPath() / mx::FilePath("libraries"));
+    api->setSearchPath(searchPath);
+    api->loadLibrary(TARGETS_NAME, RuntimeGlobals::TARGETS_PATH());
+    api->loadLibrary(STDLIB_NAME, RuntimeGlobals::STDLIB_PATH());
+    api->loadLibrary(PBRLIB_NAME, RuntimeGlobals::PBRLIB_PATH());
+    api->loadLibrary(BXDFLIB_NAME, RuntimeGlobals::BXDFLIB_PATH());
+
+    mx::FileSearchPath testSearchPath(mx::FilePath::getCurrentPath() /
+        "resources" /
+        "Materials" /
+        "TestSuite" /
+        "stdlib" /
+        "looks" );
+    mx::RtStagePtr defaultStage = api->createStage(mx::RtIdentifier("defaultStage"));
+    mx::RtFileIo fileIo(defaultStage);
+    fileIo.read("looks.mtlx", testSearchPath);
+    mx::RtExportOptions exportOptions;
+    exportOptions.mergeLooks = true;
+    exportOptions.lookGroupToMerge = "lookgroup1";
+    std::stringstream ss;
+    fileIo.exportDocument(ss, &exportOptions);
+    mx::RtStagePtr exportStage = api->createStage(mx::RtIdentifier("exportStage"));
+    mx::RtFileIo fileIo2(exportStage);
+    fileIo2.read(ss);
+    mx::RtSchemaPredicate<mx::RtLook> nodeFilter;
+    int lookCount = 0;
+    for (auto it = exportStage->traverse(nodeFilter); !it.isDone(); ++it)
+    {
+        const mx::RtIdentifier& typeName = (*it).getTypeName();
+        if (typeName == mx::RtLook::typeName())
+        {
+            lookCount++;
+        }
+    }
+    mx::RtSchemaPredicate<mx::RtLookGroup> nodeFilter2;
+    int lookGroupCount = 0;
+    for (auto it = exportStage->traverse(nodeFilter2); !it.isDone(); ++it)
+    {
+        const mx::RtIdentifier& typeName = (*it).getTypeName();
+        if (typeName == mx::RtLookGroup::typeName())
+        {
+            lookGroupCount++;
+        }
+    }
+    REQUIRE(lookGroupCount == 0);
+}
+

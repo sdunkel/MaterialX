@@ -53,7 +53,8 @@ public:
     RtPrim createNodeDef(RtPrim nodeGraph, const RtIdentifier& nodeDefName, const RtIdentifier& nodeName,
                          const RtIdentifier& version, bool isDefaultVersion, 
                          const RtIdentifier& nodeGroup = EMPTY_IDENTIFIER,
-                         const RtIdentifier& namespaceString = EMPTY_IDENTIFIER);
+                         const RtIdentifier& namespaceString = EMPTY_IDENTIFIER,
+                         const string& doc = EMPTY_STRING);
 
     /// Remove a prim from the stage.
     void removePrim(const RtPath& path);

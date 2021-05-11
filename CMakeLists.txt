@@ -11,7 +11,7 @@ if (MATERIALX_BUILD_JS)
 
     if (EMSDK_PATH)
         # NOTE: Setting the CMAKE_TOOLCHAIN_FILE needs to happen before calling project()
-        set(CMAKE_TOOLCHAIN_FILE "${MATERIALX_EMSDK_PATH}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake")
+        set(CMAKE_TOOLCHAIN_FILE "${EMSDK_PATH}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake")
     else()
         message("The EMSDK path was not supplied, disabling MATERIALX_BUILD_JS")
         set(MATERIALX_BUILD_JS OFF)
@@ -235,9 +235,6 @@ endfunction(assign_source_group)
 
 # Adjust settings for shared libraries if requested
 if(MATERIALX_BUILD_SHARED_LIBS)
-    if(MSVC)
-        message(FATAL_ERROR "Only static libraries are currently supported on Windows.")
-    endif()
     add_definitions(-DMATERIALX_BUILD_SHARED_LIBS)
     set(BUILD_SHARED_LIBS "ON")
 else()

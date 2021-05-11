@@ -9,7 +9,7 @@
 /// @file
 /// The top-level Document class
 
-#include <MaterialXCore/Library.h>
+#include <MaterialXCore/Export.h>
 
 #include <MaterialXCore/Look.h>
 #include <MaterialXCore/Node.h>
@@ -29,7 +29,7 @@ using ConstDocumentPtr = shared_ptr<const Document>;
 /// MaterialX ownership hierarchy.
 ///
 /// Use the factory function createDocument() to create a Document instance.
-class Document : public GraphElement
+class MX_CORE_API Document : public GraphElement
 {
   public:
     Document(ElementPtr parent, const string& name);
@@ -201,6 +201,9 @@ class Document : public GraphElement
     {
         removeChildOfType<Look>(name);
     }
+
+    /// Merge the looks into a single look
+    void mergeLooks(const std::string& lookGroupName);
 
     /// @}
     /// @name LookGroup Elements
@@ -677,7 +680,7 @@ class Document : public GraphElement
 
 /// Create a new Document.
 /// @relates Document
-DocumentPtr createDocument();
+MX_CORE_API DocumentPtr createDocument();
 
 } // namespace MaterialX
 

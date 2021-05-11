@@ -9,6 +9,8 @@
 /// @file
 /// GLSL code renderer
 
+#include <MaterialXRenderGlsl/Export.h>
+
 #include <MaterialXRenderGlsl/GLFramebuffer.h>
 #include <MaterialXRenderGlsl/GlslProgram.h>
 
@@ -37,7 +39,7 @@ using GlslRendererPtr = std::shared_ptr<class GlslRenderer>;
 ///     - Rendering: The program with bound inputs will be used to drawing geometry to an offscreen buffer.
 ///     An interface is provided to save this offscreen buffer to disk using an externally defined image handler.
 ///
-class GlslRenderer : public ShaderRenderer
+class MX_RENDERGLSL_API GlslRenderer : public ShaderRenderer
 {
   public:
     /// Create a GLSL renderer instance
@@ -77,7 +79,7 @@ class GlslRenderer : public ShaderRenderer
     void render() override;
 
     /// Render the current program in texture space to an off-screen buffer.
-    void renderTextureSpace();
+    void renderTextureSpace(const Vector2& uvMin, const Vector2& uvMax);
 
     /// @}
     /// @name Utilities
@@ -105,7 +107,7 @@ class GlslRenderer : public ShaderRenderer
     }
 
     /// Submit geometry for a screen-space quad.
-    void drawScreenSpaceQuad();
+    void drawScreenSpaceQuad(const Vector2& uvMin = Vector2(0.0f, 0.0f), const Vector2& uvMax = Vector2(1.0f, 1.0f));
 
     /// Sets the clear color
     void setClearColor(const Color4& clearColor);

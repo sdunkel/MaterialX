@@ -10,6 +10,7 @@
 /// Library-wide includes and types.  This file should be the first include for
 /// any public header in the MaterialXRuntime library.
 
+#include <MaterialXCore/Exception.h>
 #include <MaterialXCore/Library.h>
 
 #include <unordered_set>
@@ -49,6 +50,14 @@ class ExceptionRuntimeError : public Exception
 {
 public:
     using Exception::Exception;
+};
+
+/// @class ExceptionRuntimeTypeError
+/// An exception that is thrown when a type incompatibility error occur.
+class ExceptionRuntimeTypeError : public ExceptionRuntimeError
+{
+public:
+    using ExceptionRuntimeError::ExceptionRuntimeError;
 };
 
 /// A custom reinterpret cast function. To be used when casting between
