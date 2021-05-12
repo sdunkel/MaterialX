@@ -3,7 +3,7 @@
 // All rights reserved.  See LICENSE.txt for license.
 //
 
-#include <MaterialXGenOgsXml/SurfaceNodeMaya.h>
+#include <MaterialXGenGlsl/Nodes/SurfaceNodeMaya.h>
 #include <MaterialXGenGlsl/GlslShaderGenerator.h>
 
 #include <MaterialXGenShader/Shader.h>

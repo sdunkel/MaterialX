@@ -22,7 +22,6 @@ target_link_libraries(
     PUBLIC PyMaterialXGenGlsl
            PyMaterialXRender
            MaterialXGenOgsXml
-           MaterialXGenGlsl
            MaterialXRender
     PRIVATE ${CMAKE_DL_LIBS})
 

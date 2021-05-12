@@ -5,7 +5,7 @@
 
 #include <MaterialXGenOgsXml/GlslFragmentGenerator.h>
 #include <MaterialXGenOgsXml/OgsXmlGenerator.h>
-#include <MaterialXGenOgsXml/SurfaceNodeMaya.h>
+#include <MaterialXGenGlsl/Nodes/SurfaceNodeMaya.h>
 #include <MaterialXGenGlsl/GlslShaderGenerator.h>
 
 #include <MaterialXGenShader/Shader.h>
