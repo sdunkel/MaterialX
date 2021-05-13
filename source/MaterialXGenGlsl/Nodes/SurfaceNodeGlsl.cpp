@@ -209,15 +209,14 @@ void SurfaceNodeGlsl::emitFunctionCall(const ShaderNode& node, GenContext& conte
 
 void SurfaceNodeGlsl::emitLightLoop(const ShaderNode& node, GenContext& context, ShaderStage& stage, const string& outColor) const
 {
-    const GlslShaderGenerator& shadergen = static_cast<const GlslShaderGenerator&>(context.getShaderGenerator());
-
-    const ShaderGraph& graph = *node.getParent();
-
     // 
     // Generate Light loop if requested
     //
     if (context.getOptions().hwMaxActiveLightSources > 0)
     {
+        const GlslShaderGenerator& shadergen = static_cast<const GlslShaderGenerator&>(context.getShaderGenerator());
+        const ShaderGraph& graph = *node.getParent();
+
         shadergen.emitComment("Light loop", stage);
         shadergen.emitLine("int numLights = numActiveLightSources()", stage);
         shadergen.emitLine("lightshader lightShader", stage);
