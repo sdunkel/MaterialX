@@ -8,13 +8,13 @@
 
 /// @file
 /// OGS XML fragments generator
-
+#include <MaterialXGenOgsXml/Export.h>
 #include <MaterialXGenShader/ShaderGenerator.h>
 
 namespace MaterialX
 {
 
-class OgsXmlGenerator
+class MX_GENOGSXML_API OgsXmlGenerator
 {
 public:
     /// Generate OSG XML for the given shader fragments, output to the given stream.
