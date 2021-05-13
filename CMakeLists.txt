@@ -109,6 +109,13 @@ option(MATERIALX_BUILD_GEN_OGSFX "Build the OGSFX shader generator back-end." ON
 option(MATERIALX_BUILD_GEN_ARNOLD "Build the Arnold OSL shader generator back-end." ON)
 option(MATERIALX_BUILD_RUNTIME "Build the MaterialX Runtime data model library." OFF)
 
+
+if (MATERIALX_BUILD_GEN_OGSXML AND (CMAKE_SIZEOF_VOID_P EQUAL 4) AND WIN32)
+    # Since clients of that generator are all 64 bit, maybe we can skip building it on 32 bit
+    # platforms:
+    set(MATERIALX_BUILD_GEN_OGSXML OFF)
+endif()
+
 if (NOT MATERIALX_BUILD_PYTHON)
     set(MATERIALX_PYTHON_LTO OFF)
     set(MATERIALX_INSTALL_PYTHON OFF)
