@@ -74,7 +74,7 @@ target_link_libraries(JsMaterialX
 install(TARGETS JsMaterialX DESTINATION "${CMAKE_INSTALL_PREFIX}/JavaScript/MaterialX")
 
 # Copy the wasm output
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/JsMaterialX.wasm DESTINATION ${CMAKE_INSTALL_PREFIX}/JavaScript/MaterialX/)
+install(FILES ${CMAKE_BINARY_DIR}/lib/JsMaterialX.wasm DESTINATION ${CMAKE_INSTALL_PREFIX}/JavaScript/MaterialX/)
 
 # Copy the JavaScript files with the version appended to them.
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/JsMaterialX.js DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/ RENAME JsMaterialX-${MATERIALX_LIBRARY_VERSION}.js)
