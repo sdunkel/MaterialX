@@ -7,7 +7,7 @@
 
 #include <MaterialXFormat/File.h>
 #include <MaterialXFormat/Util.h>
-#include <iostream>
+
 namespace mx = MaterialX;
 
 TEST_CASE("Syntactic operations", "[file]")
