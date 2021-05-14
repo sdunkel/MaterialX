@@ -48,9 +48,12 @@ TEST_CASE("File system operations", "[file]")
 
     mx::FilePath currentPath = mx::FilePath::getCurrentPath();
     mx::FilePath modulePath = mx::FilePath::getModulePath();
-    bool expectedPaths = currentPath == modulePath ||
-                         currentPath == modulePath.getParentPath();
-    REQUIRE(expectedPaths);
+
+    // We expect currentPath == ${BUILD}/source/MaterialXTest
+    // We expect modulePath == ${BUILD}/bin
+
+    REQUIRE(modulePath.getParentPath() ==
+            currentPath.getParentPath().getParentPath());
 }
 
 TEST_CASE("File search path operations", "[file]")

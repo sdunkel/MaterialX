@@ -19,7 +19,7 @@ endfunction(assign_source_group)
 assign_source_group("Header Files" ${materialx_header})
 assign_source_group("Source Files" ${materialx_source})
 
-add_library(MaterialXGenOgsXml SHARED 
+add_library(MaterialXGenOgsXml
     ${materialx_source}
     ${materialx_header}
     ${pugixml_source}
