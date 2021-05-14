@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "clean": "node ./node_modules/rimraf/bin.js ./_build/",
-    "copyBuild": "node ./node_modules/copyfiles/copyfiles -f ../../../build/source/JsMaterialX/JsMaterialX* _build",
-    "copyBin": "node ./node_modules/copyfiles/copyfiles -f ../../../build/bin/JsMaterialX* _build",
+    "copyBuild": "node ./node_modules/copyfiles/copyfiles -f ../../../build/bin/JsMaterialX* _build",
     "mocha": "mocha '*.spec.js' --require @babel/register --timeout 5000",
     "pretest": "npm run clean && npm run copyBuild",
     "test": "npm run mocha"
