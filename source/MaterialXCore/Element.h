@@ -948,6 +948,12 @@ class MX_CORE_API ValueElement : public TypedElement
         return getAttribute(INTERFACE_NAME_ATTRIBUTE);
     }
 
+    /// Return the associated interface element for an element.
+    virtual ValueElementPtr getInterfaceElement() const
+    {
+        return nullptr;
+    }
+
     /// @}
     /// @name Implementation Names
     /// @{
@@ -1001,7 +1007,11 @@ class MX_CORE_API ValueElement : public TypedElement
     ValuePtr getValue() const
     {
         if (!hasValue())
-            return ValuePtr();
+        {
+            ValueElementPtr interfaceElement = getInterfaceElement();
+            if (interfaceElement)
+                return interfaceElement->getValue();
+        }
         return Value::createValueFromStrings(getValueString(), getType());
     }
 
@@ -1016,7 +1026,11 @@ class MX_CORE_API ValueElement : public TypedElement
     ValuePtr getResolvedValue(StringResolverPtr resolver = nullptr) const
     {
         if (!hasValue())
-            return ValuePtr();
+        {
+            ValueElementPtr interfaceValue = getInterfaceElement();
+            if (interfaceValue)
+                return interfaceValue->getResolvedValue(resolver);
+        }
         return Value::createValueFromStrings(getResolvedValueString(resolver), getType());
     }
 
