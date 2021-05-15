@@ -322,7 +322,8 @@ void Input::addTokens(StringResolverPtr& resolver) const
 {
     // If this input has an interface Input then use the tokens associated with that Input
     // otherwise use the tokens directly associated with this Input.
-    InputPtr interfaceInput = getInterfaceInput();
+    ValueElementPtr interfaceElement = getInterfaceElement();
+    InputPtr interfaceInput = interfaceElement ? interfaceElement->asA<Input>() : nullptr;
     if (interfaceInput)
     {
         interfaceInput->addTokens(resolver);
