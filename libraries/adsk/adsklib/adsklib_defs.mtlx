@@ -201,5 +201,6 @@
     <token name="token4" type="string" value=""  />
     <token name="token5" type="string" value=""  />
   </nodedef>
+  <implementation name="IMPL_token_node" nodedef="adsk:ND_token_node" />
 
 </materialx>

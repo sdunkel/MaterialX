@@ -1,14 +1,13 @@
 <?xml version="1.0"?>
 <materialx version="1.38">
- <nodegraph name="token_node_graph" fileprefix="resources/Images/">
-    <token name="extension" type="string" value="png" />
-    <token name="name" type="string" value="grid" />
-    <adsk:tokenlist name="tokenlist" type="" nodedef="ND_token_node" >
-      <token name="token1" type="string" interfacename="name" />
-      <token name="token2" type="string" interfacename="extension" />
-      <token name="token3" type="string" value="unused token" />
-    </adsk:tokenlist>
-    <image name="image" type="color3" nodedef="ND_image_color3" >
+  <nodegraph name="token_node_graph" fileprefix="resources/Images/" xpos="-7.2995" ypos="123.242" >
+    <token name="name" type="string" uniform="true" value="grid" />
+    <token name="extension" type="string" uniform="true" value="png" />
+    <adsk:token_node name="token_node" type="" nodedef="adsk:ND_token_node" xpos="-128" ypos="-367">
+      <token name="token1" type="string" uniform="true" interfacename="extension" value="png" />
+      <token name="token2" type="string" uniform="true" interfacename="name" value="grid" />
+    </adsk:token_node>
+    <image name="image" type="color3" nodedef="ND_image_color3" xpos="-127.5" ypos="-78">
       <input name="file" type="filename" uniform="true" value="[name].[extension]" />
     </image>
     <output name="grid_out_via_token_node" type="color3" nodename="image" />
