@@ -320,6 +320,11 @@ bool requiresImplementation(ConstNodeDefPtr nodeDef)
     {
         return false;
     }
+    static string ORGANIZATION_STRING("organization");
+    if (nodeDef->getNodeGroup() == ORGANIZATION_STRING)
+    {
+        return false;
+    }
     static string TYPE_NONE("none");
     const string& typeAttribute = nodeDef->getType();
     return !typeAttribute.empty() && typeAttribute != TYPE_NONE;
