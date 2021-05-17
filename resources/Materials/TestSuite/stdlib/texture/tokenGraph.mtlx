@@ -12,14 +12,15 @@
    </nodegraph>
 
    <!-- use tokens which are sibling of the input -->
-   <nodegraph name="Tokenized_Image_jpg" >
+   <nodegraph name="Tokenized_Image_4k_jpg" >
       <tiledimage name="tiledimage" type="color3" nodedef="ND_tiledimage_color3" >
+         <token name="Image_Resolution" type="string" value="4k" uiname="Image Resolution" />
          <token name="Image_Extension" type="string" value="jpg" uiname="Image Extension" />
-         <input name="file" type="filename" uniform="true" value="resources/Images/cloth.[Image_Extension]"/>
+         <input name="file" type="filename" uniform="true" value="resources/images/cloth.[Image_Extension]"/>
       </tiledimage>
-      <output name="out_jpg" type="color3" nodename="tiledimage" />
+      <output name="out_4k_jpg" type="color3" nodename="tiledimage" />
    </nodegraph>
-
+   
    <!-- top level tokens are not support. bmp will be the found token -->
    <token name="Image_Extension" type="string" value="jpg" uiname="Image Extension" />
    <nodegraph name="Tokenized_Image_top_level" >
