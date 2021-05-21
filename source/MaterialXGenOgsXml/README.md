@@ -40,7 +40,7 @@ Returns a filled irradiance struct {`diffuseI`, `specularI`, `Ld`, `Ls`, `Lg`, `
 Returns a specular environment sample\
 `Nw` -> world normal of the surface point\
 `Vw` -> world view direction\
-`phongExponent` -> [0.0001, 2048] tightness of the specular highlight
+`phongExponent` -> \[0.0001, 2048\] tightness of the specular highlight
 
 `float3 mayaGetIrradianceEnvironment(float3 Nw)`\
 Returns an irradiance environment sample\
@@ -48,6 +48,6 @@ Returns an irradiance environment sample\
 
 `float mayaRoughnessToPhongExp(float roughness)`\
 Converts a normalized surface roughness value into a phongExponent compatible with mayaGetSpecularEnvironment()\
-`roughness` -> [0, 1] Roughness of the surface
+`roughness` -> \[0, 1\] Roughness of the surface
 
 The OgsXml generator will fully use these function to provide improved illumination.
