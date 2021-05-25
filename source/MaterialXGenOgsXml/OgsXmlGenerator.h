@@ -39,12 +39,12 @@ public:
     static const string VP_TRANSPARENCY_NAME;
 
     /// Use Maya's latest external light functions
-    static bool useExternalLightFunctions();
-    static void setUseExternalLightFunctions(bool);
+    static bool useLightAPIV2();
+    static void setUseLightAPIV2(bool);
 
 private:
     static const string SAMPLER_SUFFIX;
-    static bool sUseExternalLightFunctions;
+    static bool sUseLightAPIV2;
 };
 
 }

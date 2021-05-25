@@ -480,13 +480,13 @@ string OgsXmlGenerator::generateLightRig(
     return stream.str();
 }
 
-bool OgsXmlGenerator::sUseExternalLightFunctions = false;
+bool OgsXmlGenerator::sUseLightAPIV2 = false;
 
-bool OgsXmlGenerator::useExternalLightFunctions() {
-    return sUseExternalLightFunctions;
+bool OgsXmlGenerator::useLightAPIV2() {
+    return sUseLightAPIV2;
 }
-void OgsXmlGenerator::setUseExternalLightFunctions(bool val) {
-    sUseExternalLightFunctions = val;
+void OgsXmlGenerator::setUseLightAPIV2(bool val) {
+    sUseLightAPIV2 = val;
 }
 
 

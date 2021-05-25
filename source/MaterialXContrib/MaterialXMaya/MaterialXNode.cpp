@@ -125,7 +125,7 @@ MStatus MaterialXNode::initialize()
     CHECK_MSTATUS(attributeAffects(ENV_IRRADIANCE_ATTRIBUTE, OUT_ATTRIBUTE))
 
 #if MAYA_API_VERSION > 20220000
-    mx::OgsXmlGenerator::setUseExternalLightFunctions(true);
+    mx::OgsXmlGenerator::setUseLightAPIV2(true);
 #endif
 
     return MS::kSuccess;

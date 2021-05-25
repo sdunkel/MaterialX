@@ -22,7 +22,7 @@ Maya provides fragment entry points for environment lighting. The lighting graph
 
 ### Superior environmental lighting
 
-Recent versions of Maya provide a new shader lighting API. Enabling the API in MaterialX requires calling `MaterialX::OgsXmlGenerator::setUseExternalLightFunctions(true);` before translating your MaterialX document.
+Recent versions of Maya provide a new shader lighting API. Enabling the API in MaterialX requires calling `MaterialX::OgsXmlGenerator::setUseLightAPIV2(true);` before translating your MaterialX document.
 
 The version 2 API relies on Maya injecting the following 5 functions into the shader code at compile time:
 

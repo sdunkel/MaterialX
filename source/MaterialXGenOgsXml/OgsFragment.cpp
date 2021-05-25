@@ -68,7 +68,7 @@ class GlslGeneratorWrapperBase
         genOptions.hwSpecularEnvironmentMethod = mx::SPECULAR_ENVIRONMENT_NONE;
 
         // Set to use no direct lighting
-        if (mx::OgsXmlGenerator::useExternalLightFunctions()) {
+        if (mx::OgsXmlGenerator::useLightAPIV2()) {
             genOptions.hwMaxActiveLightSources = 0;
         } else {
             genOptions.hwMaxActiveLightSources = _isSurface ? 16 : 0;
@@ -361,7 +361,7 @@ OgsFragment::OgsFragment(
     const mx::ShaderGraph& graph = _glslShader->getGraph();
     bool lighting = graph.hasClassification(mx::ShaderNode::Classification::SHADER | mx::ShaderNode::Classification::SURFACE) ||
                     graph.hasClassification(mx::ShaderNode::Classification::BSDF);
-    if (lighting && !mx::OgsXmlGenerator::useExternalLightFunctions())
+    if (lighting && !mx::OgsXmlGenerator::useLightAPIV2())
     {
         _lightRigName = generateLightRig(
             _lightRigSource, *_glslShader, _fragmentName
