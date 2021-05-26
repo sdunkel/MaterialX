@@ -25,17 +25,20 @@ class GLESShaderGenerator : public GlslShaderGenerator
 
     static ShaderGeneratorPtr create() { return std::make_shared<GLESShaderGenerator>(); }
 
-    /// Return a unique identifyer for the target this generator is for
+    /// Return a unique identifier for the target this generator is for
     const string& getTarget() const override { return TARGET; }
 
-    /// Unique identifyer for this generator target
+    const string& getVersion() const override { return VERSION; }
+
+    /// Unique identifier for this generator target
     static const string TARGET;
+    static const string VERSION;
 
    protected:
-    /// Emit a shader input variable
-    void emitVariableDeclaration(const ShaderPort* variable, const string& qualifier,
-        GenContext& context, ShaderStage& stage,
-        bool assignValue = true) const override;
+    void emitVertexStage(const ShaderGraph& graph, GenContext& context, ShaderStage& stage) const override;
+    void emitPixelStage(const ShaderGraph& graph, GenContext& context, ShaderStage& stage) const override;
+
+    bool requiresLighting(const ShaderGraph& graph) const;
 };
 
 }

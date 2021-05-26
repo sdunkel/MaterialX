@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<materialx version="1.38">
+	<nodedef name="ND_simplesrf_surface" node="simplesrf">
+		<input name="color" type="color3" value="0.5,0.5,0.0" />
+		<input name="opacity" type="float" value="1" />
+		<output name="out" type="surfaceshader" />
+	</nodedef>
+  
+	<nodegraph name="NG_simplesrf_surface" nodedef="ND_simplesrf_surface" >
+		<input name="color" type="color3" value="1, 1, 1" />
+		<input name="opacity" type="float" value="1" />
+		<surface name="surface" type="surfaceshader" >
+			<input name="bsdf" type="BSDF" value="" uivisible="false" />
+			<input name="edf" type="EDF" nodename="uniform_edf" />
+			<input name="opacity" type="float" interfacename="opacity" value="1" />
+		</surface>
+		<uniform_edf name="uniform_edf" type="EDF" >
+			<input name="color" type="color3" interfacename="color" value="1, 1, 1" />
+		</uniform_edf>
+		<output name="out" type="surfaceshader" nodename="surface" />
+	</nodegraph>
+
+	<simplesrf name="sr1" type="surfaceshader">
+		<input name="color" type="color3" value="0.5, 0.0, 0.5" />
+		<input name="opacity" type="float" value="1" />
+	</simplesrf>
+  
+	<surfacematerial name="material1" type="material">
+		<input name="surfaceshader" type="surfaceshader" nodename="sr1" />
+	</surfacematerial>
+</materialx>

@@ -2,7 +2,10 @@ import * as THREE from 'three';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-let camera, scene, renderer, controls, uniforms;
+let camera, scene, model, renderer, controls, uniforms;
+
+let normalMat = new THREE.Matrix3;
+let viewProjMat = new THREE.Matrix4;
 
 init();
 
@@ -40,18 +43,24 @@ function init() {
         new Promise(resolve => objLoader.load('shaderball.obj', resolve)),
         new Promise(resolve => fileloader.load('shader-frag.glsl', resolve)),
         new Promise(resolve => fileloader.load('shader-vert.glsl', resolve))
-    ]).then(([model, fShader, vShader]) => {
+    ]).then(([obj, fShader, vShader]) => {
         
         const material = new THREE.RawShaderMaterial({
-            uniforms: { time: { value: 0.0 } },
+            uniforms: { 
+              time: { value: 0.0 },
+              color1: {value: new THREE.Vector3(1, 0, 1)},
+              u_worldMatrix: new THREE.Uniform( new THREE.Matrix4() ),
+              u_viewProjectionMatrix: new THREE.Uniform( new THREE.Matrix4() ),
+              u_worldInverseTransposeMatrix: new THREE.Uniform( new THREE.Matrix4() )
+            },
             vertexShader: vShader,
             fragmentShader: fShader,
         });
-        uniforms = material.uniforms;
 
-        model.traverse((child) => {
+        obj.traverse((child) => {
             if (child.isMesh) child.material = material;
-        } );
+        });
+        model = obj;
         scene.add(model);
     }).then(() => {
         animate();
@@ -65,9 +74,19 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-function animate() {
-    if(uniforms)
-        uniforms.time.value = performance.now() / 1000;
+function animate() {  
     requestAnimationFrame(animate);
     renderer.render(scene, camera);
+
+    model.traverse((child) => {
+      if (child.isMesh) {
+        const uniforms = child.material.uniforms;
+        if(uniforms) {
+          uniforms.time.value = performance.now() / 1000;
+          uniforms.u_worldMatrix.value = child.matrixWorld;
+          uniforms.u_viewProjectionMatrix.value = viewProjMat.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+          uniforms.u_worldInverseTransposeMatrix.value.setFromMatrix3(normalMat.getNormalMatrix(child.matrixWorld));
+        }
+      }
+    });
 }

@@ -292,6 +292,8 @@ Viewer::Viewer(const std::string& materialFilename,
 #if MATERIALX_BUILD_GEN_GLES
     _genContextGLES.getOptions().targetColorSpaceOverride = "lin_rec709";
     _genContextGLES.getOptions().fileTextureVerticalFlip = false;
+    _genContextGLES.getOptions().hwMaxActiveLightSources = 0;
+    _genContextGLES.getOptions().hwSpecularEnvironmentMethod = mx::SPECULAR_ENVIRONMENT_NONE;
 #endif
     
 
