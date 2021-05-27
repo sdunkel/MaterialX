@@ -1,10 +1,26 @@
 file(GLOB_RECURSE materialx_source "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
-file(GLOB_RECURSE materialx_headers "${CMAKE_CURRENT_SOURCE_DIR}/*.h*")
+file(GLOB_RECURSE materialx_header "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
 
+function(assign_source_group prefix)
+    foreach(_source IN ITEMS ${ARGN})
+        if (IS_ABSOLUTE "${_source}")
+            file(RELATIVE_PATH _source_rel "${CMAKE_CURRENT_SOURCE_DIR}" "${_source}")
+        else()
+            set(_source_rel "${_source}")
+        endif()
+        get_filename_component(_source_path "${_source_rel}" PATH)
+        string(REPLACE "/" "\\" _source_path_msvc "${_source_path}")
+        source_group("${prefix}\\${_source_path_msvc}" FILES "${_source}")
+    endforeach()
+endfunction(assign_source_group)
+
+assign_source_group("Header Files" ${materialx_header})
 assign_source_group("Source Files" ${materialx_source})
-assign_source_group("Header Files" ${materialx_headers})
 
-add_library(MaterialXGenGLES ${materialx_source} ${materialx_headers})
+add_library(MaterialXGenGLES STATIC 
+    ${materialx_source} 
+    ${materialx_header}
+)
 
 set_target_properties(
     MaterialXGenGLES PROPERTIES
