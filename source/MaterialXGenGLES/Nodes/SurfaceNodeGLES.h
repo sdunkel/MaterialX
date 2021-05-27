@@ -20,8 +20,9 @@ class SurfaceNodeGLES : public SurfaceNodeGlsl
     static ShaderNodeImplPtr create();
 
     void emitFunctionCall(const ShaderNode& node, GenContext& context, ShaderStage& stage) const override;
+    void createVariables(const ShaderNode& node, GenContext& context, Shader& shader) const override;
 
-     private:
+    private:
     /// Closure contexts for calling closure functions.
     HwClosureContextPtr _callReflection;
     HwClosureContextPtr _callTransmission;

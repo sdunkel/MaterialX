@@ -12,6 +12,7 @@ namespace MaterialX
 {
 
 SurfaceNodeGLES::SurfaceNodeGLES()
+    : SurfaceNodeGlsl()
 {
     // Create closure contexts for calling closure functions.
     //
@@ -39,6 +40,11 @@ SurfaceNodeGLES::SurfaceNodeGLES()
 ShaderNodeImplPtr SurfaceNodeGLES::create()
 {
     return std::make_shared<SurfaceNodeGLES>();
+}
+
+void SurfaceNodeGLES::createVariables(const ShaderNode& node, GenContext& context, Shader& shader) const
+{
+    SurfaceNodeGlsl::createVariables(node, context, shader);
 }
 
 void SurfaceNodeGLES::emitFunctionCall(const ShaderNode& node, GenContext& context, ShaderStage& stage) const
