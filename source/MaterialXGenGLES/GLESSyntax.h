@@ -3,18 +3,18 @@
 // All rights reserved.  See LICENSE.txt for license.
 //
 
-#ifndef MATERIALX_OGSFXSYNTAX_H
-#define MATERIALX_OGSFXSYNTAX_H
+#ifndef MATERIALX_GLESSYNTAX_H
+#define MATERIALX_GLESSYNTAX_H
 
 /// @file
-/// OGSFX syntax class
+/// GLES syntax class
 
 #include <MaterialXGenGlsl/GlslSyntax.h>
 
 namespace MaterialX
 {
 
-/// Syntax class for OgsFx
+/// Syntax class for GLES
 class GLESSyntax : public GlslSyntax
 {
     using ParentClass = GLESSyntax;
