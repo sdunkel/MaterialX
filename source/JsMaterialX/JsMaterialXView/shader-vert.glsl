@@ -1,4 +1,4 @@
-#version 300 es
+#version 100
 
 // Uniform block: PrivateUniforms
 uniform mat4 u_worldMatrix;
@@ -6,11 +6,11 @@ uniform mat4 u_viewProjectionMatrix;
 uniform mat4 u_worldInverseTransposeMatrix;
 
 // Inputs block: VertexInputs
-in vec3 position;
-in vec3 normal;
+attribute vec3 position;
+attribute vec3 normal;
 
-out vec3 positionWorld;
-out vec3 normalWorld;
+varying vec3 positionWorld;
+varying vec3 normalWorld;
 
 void main()
 {

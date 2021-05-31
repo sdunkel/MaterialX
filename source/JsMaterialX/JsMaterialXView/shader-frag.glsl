@@ -1,4 +1,7 @@
-#version 300 es
+#version 100
+
+#extension GL_EXT_shader_texture_lod : enable
+#extension GL_OES_standard_derivatives : enable
 
 precision mediump float;
 
@@ -23,14 +26,10 @@ uniform vec3 u_viewPosition;
 
 // Uniform block: PublicUniforms
 uniform vec3 color1;
-uniform float opacity;
+uniform float surface_opacity;
 
-in vec3 positionWorld;
-in vec3 normalWorld;
-
-
-// Pixel shader outputs
-out vec4 out1;
+varying vec3 positionWorld;
+varying vec3 normalWorld;
 
 float mx_square(float x)
 {
@@ -90,20 +89,6 @@ float mx_mix(float v00, float v01, float v10, float v11,
    return mix(v0_, v1_, y);
 }
 
-vec2 mx_latlong_projection(vec3 dir)
-{
-    float latitude = -asin(dir.y) * M_PI_INV + 0.5;
-    float longitude = atan(dir.x, -dir.z) * M_PI_INV * 0.5 + 0.5;
-    return vec2(longitude, latitude);
-}
-
-vec3 mx_latlong_map_lookup(vec3 dir, mat4 transform, float lod, sampler2D sampler)
-{
-    vec3 envDir = normalize((transform * vec4(dir,0.0)).xyz);
-    vec2 uv = mx_latlong_projection(envDir);
-    return textureLod(sampler, uv, lod).rgb;
-}
-
 vec3 mx_forward_facing_normal(vec3 N, vec3 V)
 {
     if (dot(N, V) < 0.0)
@@ -116,12 +101,26 @@ vec3 mx_forward_facing_normal(vec3 N, vec3 V)
     }
 }
 
+vec2 mx_latlong_projection(vec3 dir)
+{
+    float latitude = -asin(dir.y) * M_PI_INV + 0.5;
+    float longitude = atan(dir.x, -dir.z) * M_PI_INV * 0.5 + 0.5;
+    return vec2(longitude, latitude);
+}
+
+vec3 mx_latlong_map_lookup(vec3 dir, mat4 transform, float lod, sampler2D sampler)
+{
+    vec3 envDir = normalize((transform * vec4(dir,0.0)).xyz);
+    vec2 uv = mx_latlong_projection(envDir);
+    return texture2DLodEXT(sampler, uv, lod).rgb;
+}
+
 void mx_uniform_edf(vec3 N, vec3 L, vec3 color, out EDF result)
 {
     result = color;
 }
 
-void NG_simplesrf_surface(vec3 color1, float opacity, out surfaceshader out1)
+void main()
 {
     surfaceshader surface_out = surfaceshader(vec3(0.0),vec3(0.0));
     {
@@ -150,12 +149,5 @@ void NG_simplesrf_surface(vec3 color1, float opacity, out surfaceshader out1)
         surface_out.transparency = vec3(0.0);
     }
 
-    out1 = surface_out;
-}
-
-void main()
-{
-    surfaceshader sr1_out = surfaceshader(vec3(0.0),vec3(0.0));
-    NG_simplesrf_surface(color1, opacity, sr1_out);
-    out1 = vec4(sr1_out.color, 1.0);
+    gl_FragColor = vec4(surface_out.color, 1.0);
 }

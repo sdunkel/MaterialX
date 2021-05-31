@@ -30,15 +30,24 @@ class GLESShaderGenerator : public GlslShaderGenerator
 
     const string& getVersion() const override { return VERSION; }
 
+    const string& getMathIncludePath() const override { return MATH_INCLUDE_PATH; }
+
+    const string getVertexDataPrefix(const VariableBlock& vertexData, GenContext& context) const override;
+
     /// Unique identifier for this generator target
     static const string TARGET;
     static const string VERSION;
+    static const string MATH_INCLUDE_PATH;
 
    protected:
-    void emitVertexStage(const ShaderGraph& graph, GenContext& context, ShaderStage& stage) const override;
-    void emitPixelStage(const ShaderGraph& graph, GenContext& context, ShaderStage& stage) const override;
+    void emitDirectives(GenContext& context, ShaderStage& stage) const override;
+    void emitUniforms(GenContext& context, ShaderStage& stage, HwResourceBindingContextPtr &resourceBindingCtx) const override;
+    void emitInputs(GenContext& context, ShaderStage& stage) const override;
+    void emitOutpus(GenContext& context, ShaderStage& stage) const override;
 
-    bool requiresLighting(const ShaderGraph& graph) const;
+    const string getPixelStageOutputVariable(const ShaderGraphOutputSocket& outputSocket) const override;
+
+    bool requiresLighting(const ShaderGraph& graph) const override;
 };
 
 }

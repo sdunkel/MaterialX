@@ -11,7 +11,8 @@ init();
 
 
 function init() {
-    let container = document.getElementById('container');
+    let canvas = document.getElementById('webglcanvas');
+    let context = canvas.getContext('webgl');
 
     camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 100);
     camera.position.set(0, 5, 5);
@@ -25,10 +26,9 @@ function init() {
     directionalLight.position.set(1, 1, 1).normalize();
     scene.add(directionalLight);
 
-    renderer = new THREE.WebGLRenderer();
+    renderer = new THREE.WebGLRenderer({canvas, context});
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
-    container.appendChild(renderer.domElement);
 
     window.addEventListener('resize', onWindowResize);
 

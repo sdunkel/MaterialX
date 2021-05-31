@@ -13,11 +13,11 @@
 namespace MaterialX
 {
 
-    GLESSyntax::GLESSyntax()
+const string GLESSyntax::ATTRIBUTE_QUALIFIER = "attribute";
+const string GLESSyntax::VARYING_QUALIFIER = "varying";
+
+GLESSyntax::GLESSyntax()
 {
-    //
-    // Override the GLSL syntax as needed
-    // ...
 }
 
 }

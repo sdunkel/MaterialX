@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<materialx version="1.38">
+  <nodegraph name="NG_ColorInOut">
+	<input name="in" type="color3" value="1, 0, 1" />
+	<constant name="inputAsConstant" type="color3">
+		<input name="value" type="color3" interfacename="in" />
+	</constant>
+	<constant name="dotfive" type="float">​
+		<input name="value" type="float" value="0.5" />
+	</constant>
+	<normal name="N" type="vector3" />
+	<multiply name="mult" type="vector3">
+		<input name="in1" type="vector3" nodename="N" />
+		<input name="in2" type="float" nodename="dotfive" />
+	</multiply>
+	<add name="add" type="vector3">
+		<input name="in1" type="vector3" nodename="mult" />
+		<input name="in2" type="float" nodename="dotfive" />
+	</add>
+  <output name="out" type="vector3" nodename="add" />
+  </nodegraph>
+</materialx>

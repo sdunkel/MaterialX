@@ -17,12 +17,16 @@ namespace MaterialX
 /// Syntax class for GLES
 class GLESSyntax : public GlslSyntax
 {
-    using ParentClass = GLESSyntax;
-
 public:
     GLESSyntax();
 
+    virtual const string& getAttributeQualifier() const { return ATTRIBUTE_QUALIFIER; }
+    virtual const string& getVaryingQualifier() const { return VARYING_QUALIFIER; }
+
     static SyntaxPtr create() { return std::make_shared<GLESSyntax>(); }
+
+    static const string ATTRIBUTE_QUALIFIER;
+    static const string VARYING_QUALIFIER;
 };
 
 } // namespace MaterialX
