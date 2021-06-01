@@ -3,27 +3,27 @@
 // All rights reserved.  See LICENSE.txt for license.
 //
 
-#ifndef MATERIALX_GLESSYNTAX_H
-#define MATERIALX_GLESSYNTAX_H
+#ifndef MATERIALX_ESSLSYNTAX_H
+#define MATERIALX_ESSLSYNTAX_H
 
 /// @file
-/// GLES syntax class
+/// OpenGL ES syntax class
 
 #include <MaterialXGenGlsl/GlslSyntax.h>
 
 namespace MaterialX
 {
 
-/// Syntax class for GLES
-class GLESSyntax : public GlslSyntax
+/// Syntax class for ESSL
+class EsslSyntax : public GlslSyntax
 {
 public:
-    GLESSyntax();
+    EsslSyntax();
 
     virtual const string& getAttributeQualifier() const { return ATTRIBUTE_QUALIFIER; }
     virtual const string& getVaryingQualifier() const { return VARYING_QUALIFIER; }
 
-    static SyntaxPtr create() { return std::make_shared<GLESSyntax>(); }
+    static SyntaxPtr create() { return std::make_shared<EsslSyntax>(); }
 
     static const string ATTRIBUTE_QUALIFIER;
     static const string VARYING_QUALIFIER;

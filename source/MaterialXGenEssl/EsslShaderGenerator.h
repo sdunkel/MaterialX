@@ -3,8 +3,8 @@
 // All rights reserved.  See LICENSE.txt for license.
 //
 
-#ifndef MATERIALX_GLESSHADERGENERATOR_H
-#define MATERIALX_GLESSHADERGENERATOR_H
+#ifndef MATERIALX_ESSLSHADERGENERATOR_H
+#define MATERIALX_ESSLSHADERGENERATOR_H
 
 /// @file
 /// OpenGL ES shader generator
@@ -14,16 +14,16 @@
 namespace MaterialX
 {
 
-using GLESShaderGeneratorPtr  = shared_ptr<class GLESShaderGenerator>;
+using EsslShaderGeneratorPtr = shared_ptr<class EsslShaderGenerator>;
 
 /// @class ArnoldShaderGenerator 
 /// An OpenGL ES generator 
-class GLESShaderGenerator : public GlslShaderGenerator
+class EsslShaderGenerator : public GlslShaderGenerator
 {
   public:
-    GLESShaderGenerator();
+    EsslShaderGenerator();
 
-    static ShaderGeneratorPtr create() { return std::make_shared<GLESShaderGenerator>(); }
+    static ShaderGeneratorPtr create() { return std::make_shared<EsslShaderGenerator>(); }
 
     /// Return a unique identifier for the target this generator is for
     const string& getTarget() const override { return TARGET; }

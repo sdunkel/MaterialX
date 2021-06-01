@@ -17,8 +17,8 @@
 #ifdef MATERIALX_BUILD_GEN_ARNOLD
 #include <MaterialXGenArnold/ArnoldShaderGenerator.h>
 #endif
-#ifdef MATERIALX_BUILD_GEN_GLES
-#include <MaterialXGenGLES/GLESShaderGenerator.h>
+#ifdef MATERIALX_BUILD_GEN_ESSL
+#include <MaterialXGenEssl/EsslShaderGenerator.h>
 #endif
 
 #include <MaterialXFormat/Environ.h>
@@ -242,8 +242,8 @@ Viewer::Viewer(const std::string& materialFilename,
 #if MATERIALX_BUILD_GEN_ARNOLD
     _genContextArnold(mx::ArnoldShaderGenerator::create()),
 #endif
-#if MATERIALX_BUILD_GEN_GLES
-    _genContextGLES(mx::GLESShaderGenerator::create()),
+#if MATERIALX_BUILD_GEN_ESSL
+    _genContextEssl(mx::EsslShaderGenerator::create()),
 #endif
     _unitRegistry(mx::UnitConverterRegistry::create()),
     _splitByUdims(true),
@@ -289,11 +289,11 @@ Viewer::Viewer(const std::string& materialFilename,
     _genContextArnold.getOptions().targetColorSpaceOverride = "lin_rec709";
     _genContextArnold.getOptions().fileTextureVerticalFlip = false;
 #endif
-#if MATERIALX_BUILD_GEN_GLES
-    _genContextGLES.getOptions().targetColorSpaceOverride = "lin_rec709";
-    _genContextGLES.getOptions().fileTextureVerticalFlip = false;
-    _genContextGLES.getOptions().hwMaxActiveLightSources = 0;
-    _genContextGLES.getOptions().hwSpecularEnvironmentMethod = mx::SPECULAR_ENVIRONMENT_NONE;
+#if MATERIALX_BUILD_GEN_ESSL
+    _genContextEssl.getOptions().targetColorSpaceOverride = "lin_rec709";
+    _genContextEssl.getOptions().fileTextureVerticalFlip = false;
+    _genContextEssl.getOptions().hwMaxActiveLightSources = 0;
+    _genContextEssl.getOptions().hwSpecularEnvironmentMethod = mx::SPECULAR_ENVIRONMENT_NONE;
 #endif
     
 
@@ -757,8 +757,8 @@ void Viewer::createAdvancedSettings(Widget* parent)
 #if MATERIALX_BUILD_GEN_ARNOLD
         _genContextArnold.getOptions().targetDistanceUnit = _distanceUnitOptions[index];
 #endif
-#if MATERIALX_BUILD_GEN_GLES
-        _genContextGLES.getOptions().targetDistanceUnit = _distanceUnitOptions[index];
+#if MATERIALX_BUILD_GEN_ESSL
+        _genContextEssl.getOptions().targetDistanceUnit = _distanceUnitOptions[index];
 #endif        
         for (MaterialPtr material : _materials)
         {
@@ -1464,8 +1464,8 @@ void Viewer::saveShaderSource(mx::GenContext& context)
                     new ng::MessageDialog(this, ng::MessageDialog::Type::Information, "Saved Arnold OSL source: ", baseName);
                 }
 #endif
-#if MATERIALX_BUILD_GEN_GLES
-                else if (context.getShaderGenerator().getTarget() == mx::GLESShaderGenerator::TARGET)
+#if MATERIALX_BUILD_GEN_ESSL
+                else if (context.getShaderGenerator().getTarget() == mx::EsslShaderGenerator::TARGET)
                 {
                     const std::string& pixelShader = shader->getSourceCode(mx::Stage::PIXEL);
                     writeTextFile(pixelShader, baseName + "_gles.ps");
@@ -1617,8 +1617,8 @@ void Viewer::loadStandardLibraries()
 #if MATERIALX_BUILD_GEN_ARNOLD
     initContext(_genContextArnold);
 #endif
-#if MATERIALX_BUILD_GEN_GLES
-    initContext(_genContextGLES);
+#if MATERIALX_BUILD_GEN_ESSL
+    initContext(_genContextEssl);
 #endif
 }
 
@@ -1691,11 +1691,11 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
     }
 #endif
 
-#if MATERIALX_BUILD_GEN_GLES
+#if MATERIALX_BUILD_GEN_ESSL
     // Save GLES shader source to file.
     if (key == GLFW_KEY_G && action == GLFW_PRESS)
     {
-        saveShaderSource(_genContextGLES);
+        saveShaderSource(_genContextEssl);
         return true;
     }
 #endif
