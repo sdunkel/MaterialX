@@ -50,7 +50,7 @@ class MX_GENGLSL_API GlslShaderGenerator : public HwShaderGenerator
     void emitVariableDeclaration(const ShaderPort* variable, const string& qualifier, GenContext& context, ShaderStage& stage,
                                  bool assignValue = true) const override;
 
-    virtual const string getVertexDataPrefix(const VariableBlock& vertexData, GenContext& context) const;
+    virtual const string getVertexDataPrefix(const VariableBlock& vertexData) const;
 
   public:
     /// Unique identifier for this generator target

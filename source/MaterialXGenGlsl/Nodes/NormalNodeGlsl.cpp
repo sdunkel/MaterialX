@@ -44,7 +44,7 @@ void NormalNodeGlsl::emitFunctionCall(const ShaderNode& node, GenContext& contex
 
     BEGIN_SHADER_STAGE(stage, Stage::VERTEX)
         VariableBlock& vertexData = stage.getOutputBlock(HW::VERTEX_DATA);
-        const string prefix = shadergen.getVertexDataPrefix(vertexData, context);
+        const string prefix = shadergen.getVertexDataPrefix(vertexData);
         if (space == WORLD_SPACE)
         {
             ShaderPort* normal = vertexData[HW::T_NORMAL_WORLD];
@@ -67,7 +67,7 @@ void NormalNodeGlsl::emitFunctionCall(const ShaderNode& node, GenContext& contex
 
     BEGIN_SHADER_STAGE(stage, Stage::PIXEL)
         VariableBlock& vertexData = stage.getInputBlock(HW::VERTEX_DATA);
-        const string prefix = shadergen.getVertexDataPrefix(vertexData, context);
+        const string prefix = shadergen.getVertexDataPrefix(vertexData);
         shadergen.emitLineBegin(stage);
         shadergen.emitOutput(node.getOutput(), true, false, context, stage);
         if (space == WORLD_SPACE)

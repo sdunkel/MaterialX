@@ -112,7 +112,7 @@ const string GLESShaderGenerator::getPixelStageOutputVariable(const ShaderGraphO
     return "gl_FragColor";
 }
 
-const string GLESShaderGenerator::getVertexDataPrefix(const VariableBlock&, GenContext&) const
+const string GLESShaderGenerator::getVertexDataPrefix(const VariableBlock&) const
 {
     return "";
 }

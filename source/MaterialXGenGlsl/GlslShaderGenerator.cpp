@@ -475,7 +475,7 @@ const string GlslShaderGenerator::getPixelStageOutputVariable(const ShaderGraphO
     return outputSocket.getVariable();
 }
 
-const string GlslShaderGenerator::getVertexDataPrefix(const VariableBlock& vertexData, GenContext&) const
+const string GlslShaderGenerator::getVertexDataPrefix(const VariableBlock& vertexData) const
 {
     return vertexData.getInstance() + ".";
 }

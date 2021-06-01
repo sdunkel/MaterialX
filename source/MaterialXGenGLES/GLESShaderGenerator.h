@@ -32,7 +32,7 @@ class GLESShaderGenerator : public GlslShaderGenerator
 
     const string& getMathIncludePath() const override { return MATH_INCLUDE_PATH; }
 
-    const string getVertexDataPrefix(const VariableBlock& vertexData, GenContext& context) const override;
+    const string getVertexDataPrefix(const VariableBlock& vertexData) const override;
 
     /// Unique identifier for this generator target
     static const string TARGET;
