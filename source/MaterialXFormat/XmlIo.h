@@ -85,8 +85,11 @@ class MX_FORMAT_API XmlExportOptions : public XmlWriteOptions
     /// Whether to flatten filenames
     bool flattenFilenames;
 
-    /// Search path used for flattening filenames
-    FileSearchPath imageSearchPath;
+    /// User definition path used for flattening filenames
+    FileSearchPath userDefinitionPath;
+
+    /// User texture path used for flattening filenames
+    FileSearchPath userTexturePath;
 
     /// String resolver applied during flattening filenames
     StringResolverPtr stringResolver;
@@ -188,7 +191,7 @@ MX_FORMAT_API string writeToXmlString(DocumentPtr doc, const XmlWriteOptions* wr
 /// Export a Document as XML to the given output stream.
 /// @param doc The Document to be written.
 /// @param stream The output stream to which data is written.
-/// @param exportOptions An optional pointer to an XxmlExportOptions object.
+/// @param exportOptions An optional pointer to an XmlExportOptions object.
 ///    If provided, then the given options will affect the behavior of the
 ///    export function.  Defaults to a null pointer.
 MX_FORMAT_API void exportToXmlStream(DocumentPtr doc, std::ostream& stream, const XmlExportOptions* exportOptions = nullptr);
