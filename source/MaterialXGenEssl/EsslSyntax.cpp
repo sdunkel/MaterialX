@@ -13,9 +13,6 @@
 namespace MaterialX
 {
 
-const string EsslSyntax::ATTRIBUTE_QUALIFIER = "attribute";
-const string EsslSyntax::VARYING_QUALIFIER = "varying";
-
 EsslSyntax::EsslSyntax()
 {
 }

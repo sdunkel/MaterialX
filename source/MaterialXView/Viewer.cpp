@@ -292,7 +292,7 @@ Viewer::Viewer(const std::string& materialFilename,
 #if MATERIALX_BUILD_GEN_ESSL
     _genContextEssl.getOptions().targetColorSpaceOverride = "lin_rec709";
     _genContextEssl.getOptions().fileTextureVerticalFlip = false;
-    _genContextEssl.getOptions().hwMaxActiveLightSources = 0;
+    _genContextEssl.getOptions().hwMaxActiveLightSources = 1;
     _genContextEssl.getOptions().hwSpecularEnvironmentMethod = mx::SPECULAR_ENVIRONMENT_NONE;
 #endif
     
@@ -549,6 +549,7 @@ void Viewer::applyDirectLights(mx::DocumentPtr doc)
         std::vector<mx::NodePtr> lights;
         _lightHandler->findLights(doc, lights);
         _lightHandler->registerLights(doc, lights, _genContext);
+        _lightHandler->registerLights(doc, lights, _genContextEssl);
         _lightHandler->setLightSources(lights);
     }
     catch (std::exception& e)

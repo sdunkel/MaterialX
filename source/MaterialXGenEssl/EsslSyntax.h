@@ -20,13 +20,7 @@ class EsslSyntax : public GlslSyntax
 public:
     EsslSyntax();
 
-    virtual const string& getAttributeQualifier() const { return ATTRIBUTE_QUALIFIER; }
-    virtual const string& getVaryingQualifier() const { return VARYING_QUALIFIER; }
-
     static SyntaxPtr create() { return std::make_shared<EsslSyntax>(); }
-
-    static const string ATTRIBUTE_QUALIFIER;
-    static const string VARYING_QUALIFIER;
 };
 
 } // namespace MaterialX

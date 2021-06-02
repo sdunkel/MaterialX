@@ -12,9 +12,7 @@ namespace MaterialX
 {
 
 const string EsslShaderGenerator::TARGET = "essl";
-const string EsslShaderGenerator::VERSION = "100"; // Target webgl 1.0
-const string EsslShaderGenerator::MATH_INCLUDE_PATH = "pbrlib/" + EsslShaderGenerator::TARGET + "/lib/mx_math.glsl";
-
+const string EsslShaderGenerator::VERSION = "300 es"; // Target webgl 2.0
 
 EsslShaderGenerator::EsslShaderGenerator()
     : GlslShaderGenerator()
@@ -27,6 +25,7 @@ EsslShaderGenerator::EsslShaderGenerator()
     // Temporary overwrites for THREE js
     _tokenSubstitutions[HW::T_IN_POSITION] = "position";
     _tokenSubstitutions[HW::T_IN_NORMAL] = "normal";
+    _tokenSubstitutions[HW::T_IN_TEXCOORD] = "uv";
 
     // Register override implementations
     // <!-- <image> -->
@@ -42,9 +41,6 @@ void EsslShaderGenerator::emitDirectives(GenContext&, ShaderStage& stage) const
 {
     emitLine("#version " + getVersion(), stage, false);
 BEGIN_SHADER_STAGE(stage, Stage::PIXEL)
-    emitLineBreak(stage);
-    emitLine("#extension GL_EXT_shader_texture_lod : enable", stage, false);
-    emitLine("#extension GL_OES_standard_derivatives : enable", stage, false);
     emitLineBreak(stage);
     emitLine("precision mediump float", stage);
 END_SHADER_STAGE(stage, Stage::PIXEL)
@@ -80,7 +76,7 @@ BEGIN_SHADER_STAGE(stage, Stage::VERTEX)
     if (!vertexInputs.empty())
     {
         emitComment("Inputs block: " + vertexInputs.getName(), stage);
-        emitVariableDeclarations(vertexInputs, std::dynamic_pointer_cast<EsslSyntax>(_syntax)->getAttributeQualifier(), Syntax::SEMICOLON, context, stage, false);
+        emitVariableDeclarations(vertexInputs, _syntax->getInputQualifier(), Syntax::SEMICOLON, context, stage, false);
         emitLineBreak(stage);
     }
 END_SHADER_STAGE(stage, Stage::VERTEX)
@@ -89,7 +85,7 @@ BEGIN_SHADER_STAGE(stage, Stage::PIXEL)
     const VariableBlock& vertexData = stage.getInputBlock(HW::VERTEX_DATA);
     if (!vertexData.empty())
     {
-        emitVariableDeclarations(vertexData, std::dynamic_pointer_cast<EsslSyntax>(_syntax)->getVaryingQualifier(), Syntax::SEMICOLON, context, stage, false);
+        emitVariableDeclarations(vertexData, _syntax->getInputQualifier(), Syntax::SEMICOLON, context, stage, false);
         emitLineBreak(stage);
     }
 END_SHADER_STAGE(stage, Stage::PIXEL)
@@ -101,26 +97,22 @@ BEGIN_SHADER_STAGE(stage, Stage::VERTEX)
     const VariableBlock& vertexData = stage.getOutputBlock(HW::VERTEX_DATA);
     if (!vertexData.empty())
     {
-        emitVariableDeclarations(vertexData,  std::dynamic_pointer_cast<EsslSyntax>(_syntax)->getVaryingQualifier(), Syntax::SEMICOLON, context, stage, false);
+        emitVariableDeclarations(vertexData,  _syntax->getOutputQualifier(), Syntax::SEMICOLON, context, stage, false);
         emitLineBreak(stage);
     }
 END_SHADER_STAGE(stage, Stage::VERTEX)
-}
 
-const string EsslShaderGenerator::getPixelStageOutputVariable(const ShaderGraphOutputSocket&) const
-{
-    return "gl_FragColor";
+BEGIN_SHADER_STAGE(stage, Stage::PIXEL)
+    emitComment("Pixel shader outputs", stage);
+    const VariableBlock& outputs = stage.getOutputBlock(HW::PIXEL_OUTPUTS);
+    emitVariableDeclarations(outputs, _syntax->getOutputQualifier(), Syntax::SEMICOLON, context, stage, false);
+    emitLineBreak(stage);
+END_SHADER_STAGE(stage, Stage::PIXEL)
 }
 
 const string EsslShaderGenerator::getVertexDataPrefix(const VariableBlock&) const
 {
     return "";
-}
-
-bool EsslShaderGenerator::requiresLighting(const ShaderGraph& graph) const
-{
-    // Force it to be false for now to not include lighting shader functions.
-    return GlslShaderGenerator::requiresLighting(graph) && false;
 }
 
 }
