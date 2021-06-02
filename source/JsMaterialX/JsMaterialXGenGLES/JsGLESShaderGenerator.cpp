@@ -1,5 +1,10 @@
 #include "../helpers.h"
 #include <MaterialXGenGLES/GLESShaderGenerator.h>
+#include <MaterialXGenShader/DefaultColorManagementSystem.h>
+#include <MaterialXFormat/Util.h>
+#include <MaterialXGenShader/Shader.h>
+
+#include <iostream>
 
 #include <emscripten.h>
 #include <emscripten/bind.h>
@@ -7,45 +12,43 @@
 namespace ems = emscripten;
 namespace mx = MaterialX;
 
-void initContext() {
-    mx::GenContext context(mx::GLESShaderGenerator::create());
-
+void initContext(mx::GenContext& context, mx::FileSearchPath searchPath, mx::DocumentPtr stdLib, mx::UnitConverterRegistryPtr unitRegistry) {
     // Initialize search paths.
-    for (const mx::FilePath& path : _searchPath)
+    for (const mx::FilePath& path : searchPath)
     {
         context.registerSourceCodeSearchPath(path / "libraries");
     }
 
     // Initialize color management.
     mx::DefaultColorManagementSystemPtr cms = mx::DefaultColorManagementSystem::create(context.getShaderGenerator().getTarget());
-    cms->loadLibrary(_stdLib);
+    cms->loadLibrary(stdLib);
     context.getShaderGenerator().setColorManagementSystem(cms);
 
     // Initialize unit management.
     mx::UnitSystemPtr unitSystem = mx::UnitSystem::create(context.getShaderGenerator().getTarget());
-    unitSystem->loadLibrary(_stdLib);
-    unitSystem->setUnitConverterRegistry(_unitRegistry);
+    unitSystem->loadLibrary(stdLib);
+    unitSystem->setUnitConverterRegistry(unitRegistry);
     context.getShaderGenerator().setUnitSystem(unitSystem);
     context.getOptions().targetDistanceUnit = "meter";
 }
 
-void loadStandardLibraries()
+void loadStandardLibraries(mx::GenContext& context)
 {
-     mx::DocumentPtr _stdLib;
-     mx::LinearUnitConverterPtr _distanceUnitConverter;
-     mx::StringVec _distanceUnitOptions;
-     mx::UnitConverterRegistryPtr _unitRegistry;
-     std::string _libraryFolders = "???";
-     std::string _searchPath = "???";
+    mx::DocumentPtr stdLib;
+    mx::LinearUnitConverterPtr _distanceUnitConverter;
+    mx::StringVec _distanceUnitOptions;
+    mx::UnitConverterRegistryPtr unitRegistry;
+    mx::FilePathVec libraryFolders;
+    mx::FileSearchPath searchPath;
 
     // Initialize the standard library.
     try
     {
-        _stdLib = mx::createDocument();
-        _xincludeFiles = mx::loadCoreLibraries(_libraryFolders, _searchPath, _stdLib);
+        stdLib = mx::createDocument();
+        mx::StringSet _xincludeFiles = mx::loadCoreLibraries(libraryFolders, searchPath, stdLib);
         if (_xincludeFiles.empty())
         {
-            std::cerr << "Could not find standard data libraries on the given search path: " << _searchPath.asString() << std::endl;
+            std::cerr << "Could not find standard data libraries on the given search path: " << searchPath.asString() << std::endl;
         }
     }
     catch (std::exception& e)
@@ -55,12 +58,12 @@ void loadStandardLibraries()
     }
 
     // Initialize unit management.
-    mx::UnitTypeDefPtr distanceTypeDef = _stdLib->getUnitTypeDef("distance");
+    mx::UnitTypeDefPtr distanceTypeDef = stdLib->getUnitTypeDef("distance");
     _distanceUnitConverter = mx::LinearUnitConverter::create(distanceTypeDef);
-    _unitRegistry->addUnitConverter(distanceTypeDef, _distanceUnitConverter);
-    mx::UnitTypeDefPtr angleTypeDef = _stdLib->getUnitTypeDef("angle");
+    unitRegistry->addUnitConverter(distanceTypeDef, _distanceUnitConverter);
+    mx::UnitTypeDefPtr angleTypeDef = stdLib->getUnitTypeDef("angle");
     mx::LinearUnitConverterPtr angleConverter = mx::LinearUnitConverter::create(angleTypeDef);
-    _unitRegistry->addUnitConverter(angleTypeDef, angleConverter);
+    unitRegistry->addUnitConverter(angleTypeDef, angleConverter);
 
     // Create the list of supported distance units.
     auto unitScales = _distanceUnitConverter->getUnitScale();
@@ -71,13 +74,15 @@ void loadStandardLibraries()
         _distanceUnitOptions[location] = unitScale.first;
     }
 
-    initContext();
+    initContext(context,searchPath, stdLib, unitRegistry);
 
 }
 
 
-std::string getUniformValues(mx::GLESShaderGenerator& self) {
-    mx::StringVec renderablePaths;
+std::string getUniformValues(mx::GLESShaderGenerator& self, mx::TypedElementPtr elem) {
+    mx::GenContext context(mx::GLESShaderGenerator::create());
+    loadStandardLibraries(context);
+    /*mx::StringVec renderablePaths;
     std::vector<mx::TypedElementPtr> elems;
     std::vector<mx::NodePtr> materialNodes;
     mx::findRenderableElements(doc, elems);
@@ -88,14 +93,18 @@ std::string getUniformValues(mx::GLESShaderGenerator& self) {
                 mat->setMaterialNode(materialNodes[i]);
                 newMaterials.push_back(mat);
 
-    mx::ShaderPtr shader = self.generate(shaderName, elem, context);
+    elem->getNamePath()*/
+    mx::GLESShaderGenerator& esslGenerator = static_cast<mx::GLESShaderGenerator&>(context.getShaderGenerator());
+    mx::ShaderPtr shader = self.generate(elem->getNamePath(), elem, context);
 
-               mx::ShaderStage& vs = shader->getStage(mx::Stage::VERTEX);
-                    mx::ShaderStage& ps = shader->getStage(mx::Stage::PIXEL);
-                    std::string uniforms = "{";
-                    uniforms += esslGenerator.getUniformValues(vs);
-                    uniforms += esslGenerator.getUniformValues(ps);
-                    uniforms += "}";
+    mx::ShaderStage& vs = shader->getStage(mx::Stage::VERTEX);
+    mx::ShaderStage& ps = shader->getStage(mx::Stage::PIXEL);
+    std::string uniforms = "{";
+    uniforms += esslGenerator.getUniformValues(vs);
+    uniforms += esslGenerator.getUniformValues(ps);
+    uniforms += "}";
+
+    return uniforms;
 }
 
 EMSCRIPTEN_BINDINGS(GLESShaderGenerator)
@@ -103,7 +112,7 @@ EMSCRIPTEN_BINDINGS(GLESShaderGenerator)
     ems::class_<mx::GLESShaderGenerator>("GLESShaderGenerator")
         .constructor<>()
         .function("getUniformValues", &getUniformValues)
-        .property("parentXIncludes", &mx::XmlReadOptions::parentXIncludes);
+        ;
 
 }
 
