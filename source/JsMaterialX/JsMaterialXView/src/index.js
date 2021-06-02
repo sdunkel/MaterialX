@@ -8,6 +8,9 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
 
 let camera, scene, model, renderer, composer, controls, uniforms;
+import { Uniform } from 'three';
+
+let camera, scene, model, renderer, controls;
 
 let normalMat = new THREE.Matrix3();
 let viewProjMat = new THREE.Matrix4();
@@ -96,6 +99,72 @@ function generateTangents(geometry) {
     }
 
     geometry.setAttribute('tangent', new THREE.BufferAttribute( tangentsdata, 3));
+}
+
+function toArray(value, dimension) {
+  let outValue;
+  if (Array.isArray(value) && value.length === dimension)
+    outValue = value;
+  else {
+    outValue = []; 
+    for(let i = 0; i < dimension; ++i)
+      outValue.push(value);
+  }
+
+  return outValue;
+}
+
+function toThreeUniform(type, value) {
+  let outValue;  
+  switch(type) {
+    case 'int':
+    case 'uint':
+    case 'float':
+    case 'bool':
+      outValue = value;
+      break;
+    case 'vec2':
+    case 'ivec2':
+    case 'bvec2':      
+      outValue = toArray(value, 2);
+      break;
+    case 'vec3':
+    case 'ivec3':
+    case 'bvec3':
+      outValue = toArray(value, 3);
+      break;
+    case 'vec4':
+    case 'ivec4':
+    case 'bvec4':
+    case 'mat2':
+      outValue = toArray(value, 4);
+      break;
+    case 'mat3':
+      outValue = toArray(value, 9);
+      break;
+    case 'mat4':
+      outValue = toArray(value, 16);
+      break;
+    case 'sampler2D':
+      break;
+    case 'samplerCube':
+        break;        
+    default:
+      // struct
+      outValue = toThreeUniform(value);
+  }
+
+  return outValue;
+}
+
+function toThreeUniforms(uniformJSON) {
+  let threeUniforms = {};
+  let value;
+  for (const [name, description] of Object.entries(uniformJSON)) {
+    threeUniforms[name] = new THREE.Uniform(toThreeUniform(description.type, description.value));
+  }
+
+  return threeUniforms;
 }
 
 function init() {
@@ -215,7 +284,10 @@ function init() {
               u_worldMatrix: new THREE.Uniform( new THREE.Matrix4() ),
               u_viewProjectionMatrix: new THREE.Uniform( new THREE.Matrix4() ),
               u_worldInverseTransposeMatrix: new THREE.Uniform( new THREE.Matrix4() )
-            },
+            }
+        });
+        const material = new THREE.RawShaderMaterial({
+            uniforms: uniforms,
             vertexShader: vShader,
             fragmentShader: fShader,
         });

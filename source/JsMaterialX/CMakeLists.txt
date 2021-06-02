@@ -1,5 +1,6 @@
 set(OUTPUT_CORE ${CMAKE_CURRENT_SOURCE_DIR}/JsMaterialXCore/)
 set(OUTPUT_FORMAT ${CMAKE_CURRENT_SOURCE_DIR}/JsMaterialXFormat/)
+set(OUTPUT_GENGLES ${CMAKE_CURRENT_SOURCE_DIR}/JsMaterialGenGLES/)
 set(OUTPUT_LIBS ${PROJECT_BINARY_DIR}/source/)
 
 set(SOURCE_FOLDER ${CMAKE_SOURCE_DIR}/source)
@@ -22,6 +23,8 @@ set(CORE_DEPS ${OUTPUT_CORE}JsTypes.cpp
     ${OUTPUT_CORE}JsTraversal.cpp)
 
 set(FORMAT_DEPS ${OUTPUT_FORMAT}JsXmlIo.cpp)
+
+set(GENGLES_DEPS ${OUTPUT_GENGLES}JsGlslShaderGenerator.cpp)
 
 # Include the source directory
 set(JS_LINK_FLAGS "-I${SOURCE_FOLDER} ")
@@ -56,7 +59,8 @@ endif()
 
 add_executable(JsMaterialX MaterialXLib.cpp
     ${CORE_DEPS}
-    ${FORMAT_DEPS})
+    ${FORMAT_DEPS}
+    ${GENGLES_DEPS})
 
 set_target_properties(JsMaterialX 
     PROPERTIES
@@ -68,6 +72,7 @@ set_target_properties(JsMaterialX
 target_link_libraries(JsMaterialX
     PUBLIC MaterialXCore
     PUBLIC MaterialXFormat
+    PUBLIC MaterialXGenGLES
     PRIVATE ${CMAKE_DL_LIBS})
 
 # Install the JavaScript output
