@@ -26,6 +26,7 @@ EsslShaderGenerator::EsslShaderGenerator()
     _tokenSubstitutions[HW::T_IN_POSITION] = "position";
     _tokenSubstitutions[HW::T_IN_NORMAL] = "normal";
     _tokenSubstitutions[HW::T_IN_TEXCOORD] = "uv";
+    _tokenSubstitutions[HW::T_IN_TANGENT] = "tangent";
 
     // Register override implementations
     // <!-- <image> -->
