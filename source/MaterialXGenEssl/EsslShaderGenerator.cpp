@@ -7,6 +7,7 @@
 #include <MaterialXGenEssl/EsslSyntax.h>
 
 #include <MaterialXGenShader/Nodes/HwImageNode.h>
+#include <MaterialXGenShader/Util.h>
 
 namespace MaterialX
 {
@@ -147,7 +148,7 @@ string EsslShaderGenerator::getUniformValues(ShaderStage& stage) const {
                         if (variable->getType()->isAggregate())
                             str += "]";
                     }
-                    std::cout << str << std::endl;
+                    //std::cout << str << std::endl;
                     result += str + " },\n";
                 }
             }

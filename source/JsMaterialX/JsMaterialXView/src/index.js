@@ -6,11 +6,9 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
-
-let camera, scene, model, renderer, composer, controls, uniforms;
 import { Uniform } from 'three';
 
-let camera, scene, model, renderer, controls;
+let camera, scene, model, renderer, composer, controls, uniforms;
 
 let normalMat = new THREE.Matrix3();
 let viewProjMat = new THREE.Matrix4();
@@ -211,12 +209,15 @@ function init() {
     const hdrloader = new RGBELoader();
 
     Promise.all([
+
         new Promise(resolve => hdrloader.setDataType(THREE.FloatType).load('san_giuseppe_bridge_split.hdr', resolve)),
         new Promise(resolve => hdrloader.setDataType(THREE.FloatType).load('irradiance/san_giuseppe_bridge_split.hdr', resolve)),
         new Promise(resolve => objLoader.load('shaderball.obj', resolve)),
         new Promise(resolve => fileloader.load('shader-frag.glsl', resolve)),
-        new Promise(resolve => fileloader.load('shader-vert.glsl', resolve))
-    ]).then(([radianceTexture, irradianceTexture, obj, fShader, vShader]) => {
+        new Promise(resolve => fileloader.load('shader-vert.glsl', resolve)),
+        new Promise(function (resolve) { MaterialX().then((module) => { resolve(module.getMaterialX()); }); }),
+        new Promise(resolve => fileloader.load('material.mtlx', resolve))
+    ]).then(([radianceTexture, irradianceTexture, obj, fShader, vShader, mx, mtlxMaterial]) => {
 
         // RGBELoader sets flipY to true by default
         radianceTexture.flipY = false;

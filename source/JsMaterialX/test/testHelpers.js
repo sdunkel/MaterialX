@@ -1,4 +1,4 @@
-import Module from './_build/JsMaterialX.js';
+import MaterialX from './_build/JsMaterialX.js';
 // import Module from './_build/JsMaterialX-1.37.1.js'; // uncomment to load the versioned JsMaterialX file
 import regeneratorRuntime from 'regenerator-runtime'; // This is required for the async/awaits
 var fs = require('fs');
@@ -10,7 +10,7 @@ export function initMaterialX() {
     return new Promise(function (resolve) {
         // Note: Module is not a promise.
         // The then function is defined by emscripten.
-        Module().then((module) => {
+        MaterialX().then((module) => {
             resolve(module.getMaterialX());
         });
     });

@@ -13,7 +13,13 @@ module.exports = {
       patterns: [
         { from: "../../../resources/Geometry" },
         { from: "../../../resources/Lights" },
+        { from: "../../../resources/Geometry/shaderball.obj" },
+        { from: "../../../build/source/JsMaterialX/JsMaterialX.wasm" },
+        { from: "../../../build/source/JsMaterialX/JsMaterialX.js" },
       ],
     }),
-  ]
+  ],
+  externals: {
+    JsMaterialX: 'JsMaterialX',
+  },
 };

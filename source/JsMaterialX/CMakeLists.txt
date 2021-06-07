@@ -1,6 +1,6 @@
 set(OUTPUT_CORE ${CMAKE_CURRENT_SOURCE_DIR}/JsMaterialXCore/)
 set(OUTPUT_FORMAT ${CMAKE_CURRENT_SOURCE_DIR}/JsMaterialXFormat/)
-set(OUTPUT_GENGLES ${CMAKE_CURRENT_SOURCE_DIR}/JsMaterialXGenGLES/)
+set(OUTPUT_GENESSL ${CMAKE_CURRENT_SOURCE_DIR}/JsMaterialXGenEssl/)
 set(OUTPUT_LIBS ${PROJECT_BINARY_DIR}/source/)
 
 set(SOURCE_FOLDER ${CMAKE_SOURCE_DIR}/source)
@@ -24,19 +24,25 @@ set(CORE_DEPS ${OUTPUT_CORE}JsTypes.cpp
 
 set(FORMAT_DEPS ${OUTPUT_FORMAT}JsXmlIo.cpp)
 
-set(GENGLES_DEPS ${OUTPUT_GENGLES}JsGLESShaderGenerator.cpp)
+set(GENESSL_DEPS ${OUTPUT_GENESSL}JsEsslShaderGenerator.cpp)
 
 # Include the source directory
 set(JS_LINK_FLAGS "-I${SOURCE_FOLDER} ")
 
 # Add all of the required flags for emcc
-string(APPEND JS_LINK_FLAGS "-s WASM=1 -s DISABLE_EXCEPTION_CATCHING=0 -s MODULARIZE=1 -s EXPORT_ES6=1 -s USE_ES6_IMPORT_META=0 -s MEMORY_GROWTH_LINEAR_STEP=32MB -s ALLOW_MEMORY_GROWTH=1 ")
+string(APPEND JS_LINK_FLAGS "-s WASM=1 -s DISABLE_EXCEPTION_CATCHING=0 --profiling -s MODULARIZE=1 -s EXPORT_NAME='MaterialX' -s MEMORY_GROWTH_LINEAR_STEP=32MB -s ALLOW_MEMORY_GROWTH=1 ")
 
 # Add the post javascript core files 
 string(APPEND JS_LINK_FLAGS "--post-js ${OUTPUT_CORE}JsTypes.js --post-js ${OUTPUT_CORE}JsUnit.js --post-js ${OUTPUT_CORE}JsGeom.js --post-js ${OUTPUT_CORE}JsDefinition.js --post-js ${OUTPUT_CORE}JsDocument.js --post-js ${OUTPUT_CORE}JsElement.js --post-js ${OUTPUT_CORE}JsInterface.js --post-js ${OUTPUT_CORE}JsLook.js --post-js ${OUTPUT_CORE}JsNode.js --post-js ${OUTPUT_CORE}JsProperty.js --post-js ${OUTPUT_CORE}JsTraversal.js --post-js ${OUTPUT_CORE}JsUtil.js --post-js ${OUTPUT_CORE}JsValue.js --post-js ${OUTPUT_CORE}JsVariant.js ")
 
 # Add the post javascript format files 
-string(APPEND JS_LINK_FLAGS "--post-js ${OUTPUT_FORMAT}JsXmlIo.js --post-js ${CMAKE_CURRENT_SOURCE_DIR}/initMaterialX.js ")
+string(APPEND JS_LINK_FLAGS "--post-js ${OUTPUT_FORMAT}JsXmlIo.js ")
+
+#string(APPEND JS_LINK_FLAGS "--preload-file /home/dunkels/git/MaterialX/libraries")
+
+
+# Add the post javascript shadergen files 
+string(APPEND JS_LINK_FLAGS "--post-js ${OUTPUT_GENESSL}JsEsslShaderGenerator.js --post-js ${CMAKE_CURRENT_SOURCE_DIR}/initMaterialX.js ")
 
 if (EXTERNAL_LINK_FLAGS)
     string(APPEND JS_LINK_FLAGS "${EXTERNAL_LINK_FLAGS} ")
@@ -53,14 +59,14 @@ if (CMAKE_BUILD_TYPE MATCHES Debug)
     string(APPEND JS_LINK_FLAGS "--bind ")
 else()
     message("JS: Building Release")
-    string(APPEND JS_LINK_FLAGS "-flto -Os --bind ")
-    string(APPEND JS_COMPILE_FLAGS "-flto -Os ")
+    string(APPEND JS_LINK_FLAGS "-O1 --bind ")
+    string(APPEND JS_COMPILE_FLAGS "-O1 ")
 endif()
 
 add_executable(JsMaterialX MaterialXLib.cpp
     ${CORE_DEPS}
     ${FORMAT_DEPS}
-    ${GENGLES_DEPS})
+    ${GENESSL_DEPS})
 
 set_target_properties(JsMaterialX 
     PROPERTIES
@@ -72,7 +78,7 @@ set_target_properties(JsMaterialX
 target_link_libraries(JsMaterialX
     PUBLIC MaterialXCore
     PUBLIC MaterialXFormat
-    PUBLIC MaterialXGenGLES
+    PUBLIC MaterialXGenEssl
     PRIVATE ${CMAKE_DL_LIBS})
 
 # Install the JavaScript output
