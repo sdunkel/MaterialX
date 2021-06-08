@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -110,7 +111,7 @@ function init() {
 
     scene.add(new THREE.AmbientLight( 0x222222));
     const directionalLight = new THREE.DirectionalLight(new THREE.Color(1, 0.894474, 0.567234), 2.52776);
-    directionalLight.position.set(1, 1, 1).normalize();
+    directionalLight.position.set(-1, 1, 1).normalize();
     scene.add(directionalLight);
     const lightData = {
       type: 1,
@@ -138,12 +139,20 @@ function init() {
     // Load model and shaders
     var fileloader = new THREE.FileLoader();
     const objLoader = new OBJLoader();
+    const hdrloader = new RGBELoader();
 
     Promise.all([
+        new Promise(resolve => hdrloader.setDataType(THREE.FloatType).load('san_giuseppe_bridge_split.hdr', resolve)),
+        new Promise(resolve => hdrloader.setDataType(THREE.FloatType).load('irradiance/san_giuseppe_bridge_split.hdr', resolve)),
         new Promise(resolve => objLoader.load('shaderball.obj', resolve)),
         new Promise(resolve => fileloader.load('shader-frag.glsl', resolve)),
         new Promise(resolve => fileloader.load('shader-vert.glsl', resolve))
-    ]).then(([obj, fShader, vShader]) => {
+    ]).then(([radianceTexture, irradianceTexture, obj, fShader, vShader]) => {
+
+        // RGBELoader sets flipY to true by default
+        radianceTexture.flipY = false;
+        irradianceTexture.flipY = false;
+
         const material = new THREE.RawShaderMaterial({
             uniforms: { 
               time: { value: 0.0 },
@@ -194,6 +203,12 @@ function init() {
 
               u_numActiveLightSources: {value: 1},
               u_lightData: {value: [ lightData ]},
+
+              u_envMatrix: {value: new THREE.Matrix4().makeRotationY(Math.PI)},
+              u_envRadiance: {value: radianceTexture},
+              u_envRadianceMips: {value: 1},
+              u_envRadianceSamples: {value: 16},
+              u_envIrradiance: {value: irradianceTexture},
 
               u_viewPosition: new THREE.Uniform( new THREE.Vector3() ),
 

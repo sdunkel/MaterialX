@@ -20,6 +20,11 @@ struct lightshader { vec3 intensity; vec3 direction; };
 struct thinfilm { float thickness; float ior; };
 
 // Uniform block: PrivateUniforms
+uniform mat4 u_envMatrix;
+uniform sampler2D u_envRadiance;
+uniform int u_envRadianceMips;
+uniform int u_envRadianceSamples;
+uniform sampler2D u_envIrradiance;
 uniform vec3 u_viewPosition;
 uniform int u_numActiveLightSources;
 
@@ -608,14 +613,75 @@ vec3 mx_compute_fresnel(float cosTheta, FresnelData fd)
         return mx_fresnel_airy(cosTheta, fd.ior, fd.extinction, fd.tf_thickness, fd.tf_ior);
 }
 
+int numRadianceSamples()
+{
+    return min(u_envRadianceSamples, MAX_ENV_RADIANCE_SAMPLES);
+}
+
+// https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch20.html
+// Section 20.4 Equation 13
+float mx_latlong_compute_lod(vec3 dir, float pdf, float maxMipLevel, int envSamples)
+{
+    const float MIP_LEVEL_OFFSET = 1.5;
+    float effectiveMaxMipLevel = maxMipLevel - MIP_LEVEL_OFFSET;
+    float distortion = sqrt(1.0 - mx_square(dir.y));
+    return max(effectiveMaxMipLevel - 0.5 * log2(float(envSamples) * pdf * distortion), 0.0);
+}
+
 vec3 mx_environment_radiance(vec3 N, vec3 V, vec3 X, vec2 roughness, int distribution, FresnelData fd)
 {
-    return vec3(0.0);
+    vec3 Y = normalize(cross(N, X));
+    X = cross(Y, N);
+
+    // Compute shared dot products.
+    float NdotV = clamp(dot(N, V), M_FLOAT_EPS, 1.0);
+    
+    // Integrate outgoing radiance using filtered importance sampling.
+    // http://cgg.mff.cuni.cz/~jaroslav/papers/2008-egsr-fis/2008-egsr-fis-final-embedded.pdf
+    vec3 radiance = vec3(0.0);
+    int envRadianceSamples = numRadianceSamples();	
+    for (int i = 0; i < envRadianceSamples; i++)
+    {
+        vec2 Xi = mx_spherical_fibonacci(i, envRadianceSamples);
+
+        // Compute the half vector and incoming light direction.
+        vec3 H = mx_ggx_importance_sample_NDF(Xi, X, Y, N, roughness.x, roughness.y);
+        vec3 L = -reflect(V, H);
+        
+        // Compute dot products for this sample.
+        float NdotH = clamp(dot(N, H), M_FLOAT_EPS, 1.0);
+        float NdotL = clamp(dot(N, L), M_FLOAT_EPS, 1.0);
+        float VdotH = clamp(dot(V, H), M_FLOAT_EPS, 1.0);
+        float LdotH = VdotH;
+
+        // Sample the environment light from the given direction.
+        float pdf = mx_ggx_PDF(X, Y, H, NdotH, LdotH, roughness.x, roughness.y);
+        float lod = mx_latlong_compute_lod(L, pdf, float(u_envRadianceMips) - 1.0, envRadianceSamples);
+        vec3 sampleColor = mx_latlong_map_lookup(L, u_envMatrix, lod, u_envRadiance);
+
+        // Compute the Fresnel term.
+        vec3 F = mx_compute_fresnel(VdotH, fd);
+
+        // Compute the geometric term.
+        float G = mx_ggx_smith_G(NdotL, NdotV, mx_average_roughness(roughness));
+        
+        // Add the radiance contribution of this sample.
+        // From https://cdn2.unrealengine.com/Resources/files/2013SiggraphPresentationsNotes-26915738.pdf
+        //   incidentLight = sampleColor * NdotL
+        //   microfacetSpecular = D * F * G / (4 * NdotL * NdotV)
+        //   pdf = D * NdotH / (4 * VdotH)
+        //   radiance = incidentLight * microfacetSpecular / pdf
+        radiance += sampleColor * F * G * VdotH / (NdotV * NdotH);
+    }
+
+    // Normalize and return the final radiance.
+    radiance /= float(envRadianceSamples);
+    return radiance;
 }
 
 vec3 mx_environment_irradiance(vec3 N)
 {
-    return vec3(0.0);
+    return mx_latlong_map_lookup(N, u_envMatrix, 0.0, u_envIrradiance);
 }
 
 void mx_directional_light(LightData light, vec3 position, out lightshader result)
@@ -1116,34 +1182,6 @@ void mx_oren_nayar_diffuse_bsdf_indirect(vec3 V, float weight, vec3 color, float
     result = Li * color * weight;
 }
 
-// We fake diffuse transmission by using diffuse reflection from the opposite side.
-// So this BTDF is really a BRDF.
-void mx_translucent_bsdf_reflection(vec3 L, vec3 V, vec3 P, float occlusion, float weight, vec3 color, vec3 normal, out BSDF result)
-{
-    // Invert normal since we're transmitting light from the other side
-    float NdotL = dot(L, -normal);
-    if (NdotL <= 0.0 || weight < M_FLOAT_EPS)
-    {
-        result = BSDF(0.0);
-        return;
-    }
-
-    result = color * weight * NdotL * M_PI_INV;
-}
-
-void mx_translucent_bsdf_indirect(vec3 V, float weight, vec3 color, vec3 normal, out BSDF result)
-{
-    if (weight < M_FLOAT_EPS)
-    {
-        result = BSDF(0.0);
-        return;
-    }
-
-    // Invert normal since we're transmitting light from the other side
-    vec3 Li = mx_environment_irradiance(-normal);
-    result = Li * color * weight;
-}
-
 
 void mx_subsurface_bsdf_reflection(vec3 L, vec3 V, vec3 P, float occlusion, float weight, vec3 color, vec3 radius, float anisotropy, vec3 normal, out BSDF result)
 {
@@ -1173,6 +1211,34 @@ void mx_subsurface_bsdf_indirect(vec3 V, float weight, vec3 color, vec3 radius, 
 
     // For now, we render indirect subsurface as simple indirect diffuse.
     vec3 Li = mx_environment_irradiance(normal);
+    result = Li * color * weight;
+}
+
+// We fake diffuse transmission by using diffuse reflection from the opposite side.
+// So this BTDF is really a BRDF.
+void mx_translucent_bsdf_reflection(vec3 L, vec3 V, vec3 P, float occlusion, float weight, vec3 color, vec3 normal, out BSDF result)
+{
+    // Invert normal since we're transmitting light from the other side
+    float NdotL = dot(L, -normal);
+    if (NdotL <= 0.0 || weight < M_FLOAT_EPS)
+    {
+        result = BSDF(0.0);
+        return;
+    }
+
+    result = color * weight * NdotL * M_PI_INV;
+}
+
+void mx_translucent_bsdf_indirect(vec3 V, float weight, vec3 color, vec3 normal, out BSDF result)
+{
+    if (weight < M_FLOAT_EPS)
+    {
+        result = BSDF(0.0);
+        return;
+    }
+
+    // Invert normal since we're transmitting light from the other side
+    vec3 Li = mx_environment_irradiance(-normal);
     result = Li * color * weight;
 }
 
@@ -1290,15 +1356,15 @@ void IMPL_standard_surface_surfaceshader(float base, vec3 base_color, float diff
             thinfilm thin_film_bsdf_out;
             thin_film_bsdf_out.thickness = thin_film_thickness;
             thin_film_bsdf_out.ior = thin_film_IOR;
-            BSDF transmission_bsdf_out = BSDF(0.0);
             BSDF metal_bsdf_out = BSDF(0.0);
             mx_conductor_bsdf_reflection(L, V, P, occlusion, 1.000000, artistic_ior_ior, artistic_ior_extinction, main_roughness_out, normal1, main_tangent_out, 0, thinfilm(0.0,1.5), metal_bsdf_out);
+            BSDF transmission_bsdf_out = BSDF(0.0);
             BSDF diffuse_bsdf_out = BSDF(0.0);
             mx_oren_nayar_diffuse_bsdf_reflection(L, V, P, occlusion, base, coat_affected_diffuse_color_out, diffuse_roughness, normal1, diffuse_bsdf_out);
-            BSDF translucent_bsdf_out = BSDF(0.0);
-            mx_translucent_bsdf_reflection(L, V, P, occlusion, 1.000000, coat_affected_subsurface_color_out, normal1, translucent_bsdf_out);
             BSDF subsurface_bsdf_out = BSDF(0.0);
             mx_subsurface_bsdf_reflection(L, V, P, occlusion, 1.000000, coat_affected_subsurface_color_out, subsurface_radius_scaled_out, subsurface_anisotropy, normal1, subsurface_bsdf_out);
+            BSDF translucent_bsdf_out = BSDF(0.0);
+            mx_translucent_bsdf_reflection(L, V, P, occlusion, 1.000000, coat_affected_subsurface_color_out, normal1, translucent_bsdf_out);
             BSDF selected_subsurface_bsdf_out = BSDF(0.0);
             mx_mix_bsdf_reflection(L, V, P, occlusion, translucent_bsdf_out, subsurface_bsdf_out, subsurface_selector_out, selected_subsurface_bsdf_out);
             BSDF subsurface_mix_out = BSDF(0.0);
@@ -1335,15 +1401,15 @@ void IMPL_standard_surface_surfaceshader(float base, vec3 base_color, float diff
             thinfilm thin_film_bsdf_out;
             thin_film_bsdf_out.thickness = thin_film_thickness;
             thin_film_bsdf_out.ior = thin_film_IOR;
-            BSDF transmission_bsdf_out = BSDF(0.0);
             BSDF metal_bsdf_out = BSDF(0.0);
             mx_conductor_bsdf_indirect(V, 1.000000, artistic_ior_ior, artistic_ior_extinction, main_roughness_out, normal1, main_tangent_out, 0, thinfilm(0.0,1.5), metal_bsdf_out);
+            BSDF transmission_bsdf_out = BSDF(0.0);
             BSDF diffuse_bsdf_out = BSDF(0.0);
             mx_oren_nayar_diffuse_bsdf_indirect(V, base, coat_affected_diffuse_color_out, diffuse_roughness, normal1, diffuse_bsdf_out);
-            BSDF translucent_bsdf_out = BSDF(0.0);
-            mx_translucent_bsdf_indirect(V, 1.000000, coat_affected_subsurface_color_out, normal1, translucent_bsdf_out);
             BSDF subsurface_bsdf_out = BSDF(0.0);
             mx_subsurface_bsdf_indirect(V, 1.000000, coat_affected_subsurface_color_out, subsurface_radius_scaled_out, subsurface_anisotropy, normal1, subsurface_bsdf_out);
+            BSDF translucent_bsdf_out = BSDF(0.0);
+            mx_translucent_bsdf_indirect(V, 1.000000, coat_affected_subsurface_color_out, normal1, translucent_bsdf_out);
             BSDF selected_subsurface_bsdf_out = BSDF(0.0);
             mx_mix_bsdf_indirect(V, translucent_bsdf_out, subsurface_bsdf_out, subsurface_selector_out, selected_subsurface_bsdf_out);
             BSDF subsurface_mix_out = BSDF(0.0);
