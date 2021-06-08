@@ -38,8 +38,7 @@ string(APPEND JS_LINK_FLAGS "--post-js ${OUTPUT_CORE}JsTypes.js --post-js ${OUTP
 # Add the post javascript format files 
 string(APPEND JS_LINK_FLAGS "--post-js ${OUTPUT_FORMAT}JsXmlIo.js ")
 
-#string(APPEND JS_LINK_FLAGS "--preload-file /home/dunkels/git/MaterialX/libraries")
-
+string(APPEND JS_LINK_FLAGS "--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries@libraries ")
 
 # Add the post javascript shadergen files 
 string(APPEND JS_LINK_FLAGS "--post-js ${OUTPUT_GENESSL}JsEsslShaderGenerator.js --post-js ${CMAKE_CURRENT_SOURCE_DIR}/initMaterialX.js ")

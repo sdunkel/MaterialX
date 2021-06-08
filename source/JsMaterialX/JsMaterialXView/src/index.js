@@ -8,7 +8,7 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
 import { Uniform } from 'three';
 
-let camera, scene, model, renderer, composer, controls, uniforms;
+let camera, scene, model, renderer, composer, controls, uniforms, mx;
 
 let normalMat = new THREE.Matrix3();
 let viewProjMat = new THREE.Matrix4();
@@ -218,75 +218,90 @@ function init() {
         new Promise(function (resolve) { MaterialX().then((module) => { resolve(module.getMaterialX()); }); }),
         new Promise(resolve => fileloader.load('material.mtlx', resolve))
     ]).then(([radianceTexture, irradianceTexture, obj, fShader, vShader, mx, mtlxMaterial]) => {
+        mx = mxIn;
+        let doc = mx.createDocument();
+        
+        let gen = new mx.EsslShaderGenerator();
+        let genContext = new mx.GenContext(gen);
+        let stdlib = mx.loadStandardLibraries(genContext);
+        
+        mx.readFromXmlString(doc, mtlxMaterial);
+        doc.importLibrary(stdlib);        
+
+        let shader = gen.generate(doc.getNodeGraphs()[0].getNodes()[0].getNamePath(), doc.getNodeGraphs()[0].getNodes()[0], genContext);
+
+        fShader = shader.getSourceCode("pixel");
+        vShader = shader.getSourceCode("vertex");
+        
+        console.log("uniforms: ", gen.getUniformValues(doc.getNodeGraphs()[0].getNodes()[0], genContext));
+        let uniforms = {};//toThreeUniforms(JSON.parse(uniformsJSON));
+        Object.assign(uniforms, { 
+          time: { value: 0.0 },
+
+          base: {value: 1.000000},
+          base_color: {value: new THREE.Vector3(0.800000, 0.800000, 0.800000)},
+          diffuse_roughness: {value: 0.000000},
+          metalness: {value: 0.000000},
+          specular: {value: 1.000000},
+          specular_color: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
+          specular_roughness: {value: 0.200000},
+          specular_IOR: {value: 1.500000},
+          specular_anisotropy: {value: 0.000000},
+          specular_rotation: {value: 0.000000},
+          transmission: {value: 0.000000},
+          transmission_color: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
+          transmission_depth: {value: 0.000000},
+          transmission_scatter: {value: new THREE.Vector3(0.000000, 0.000000, 0.000000)},
+          transmission_scatter_anisotropy: {value: 0.000000},
+          transmission_dispersion: {value: 0.000000},
+          transmission_extra_roughness: {value: 0.000000},
+          subsurface: {value: 0.000000},
+          subsurface_color: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
+          subsurface_radius: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
+          subsurface_scale: {value: 1.000000},
+          subsurface_anisotropy: {value: 0.000000},
+          sheen: {value: 0.000000},
+          sheen_color: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
+          sheen_roughness: {value: 0.300000},
+          coat: {value: 0.000000},
+          coat_color: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
+          coat_roughness: {value: 0.100000},
+          coat_anisotropy: {value: 0.000000},
+          coat_rotation: {value: 0.000000},
+          coat_IOR: {value: 1.500000},
+          coat_affect_color: {value: 0.000000},
+          coat_affect_roughness: {value: 0.000000},
+          thin_film_thickness: {value: 0.000000},
+          thin_film_IOR: {value: 1.500000},
+          emission: {value: 0.000000},
+          emission_color: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
+          opacity: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
+          thin_walled: {value: false},
+
+          burley_brdf1_weight: {value: 1.0},
+          burley_brdf1_color: {value: new THREE.Vector3(0.6, 0.6, 0.6)},
+          burley_brdf1_roughness: {value: 0.2},
+
+          u_numActiveLightSources: {value: 1},
+          u_lightData: {value: [ lightData ]},
+
+          u_envMatrix: {value: new THREE.Matrix4().makeRotationY(Math.PI)},
+          u_envRadiance: {value: radianceTexture},
+          u_envRadianceMips: {value: 1},
+          u_envRadianceSamples: {value: 16},
+          u_envIrradiance: {value: irradianceTexture},
+
+          u_viewPosition: new THREE.Uniform( new THREE.Vector3() ),
+
+          u_worldMatrix: new THREE.Uniform( new THREE.Matrix4() ),
+          u_viewProjectionMatrix: new THREE.Uniform( new THREE.Matrix4() ),
+          u_worldInverseTransposeMatrix: new THREE.Uniform( new THREE.Matrix4() )
+        });
 
         // RGBELoader sets flipY to true by default
         radianceTexture.flipY = false;
         irradianceTexture.flipY = false;
 
-        const material = new THREE.RawShaderMaterial({
-            uniforms: { 
-              time: { value: 0.0 },
-
-              base: {value: 1.000000},
-              base_color: {value: new THREE.Vector3(0.800000, 0.800000, 0.800000)},
-              diffuse_roughness: {value: 0.000000},
-              metalness: {value: 0.000000},
-              specular: {value: 1.000000},
-              specular_color: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
-              specular_roughness: {value: 0.200000},
-              specular_IOR: {value: 1.500000},
-              specular_anisotropy: {value: 0.000000},
-              specular_rotation: {value: 0.000000},
-              transmission: {value: 0.000000},
-              transmission_color: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
-              transmission_depth: {value: 0.000000},
-              transmission_scatter: {value: new THREE.Vector3(0.000000, 0.000000, 0.000000)},
-              transmission_scatter_anisotropy: {value: 0.000000},
-              transmission_dispersion: {value: 0.000000},
-              transmission_extra_roughness: {value: 0.000000},
-              subsurface: {value: 0.000000},
-              subsurface_color: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
-              subsurface_radius: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
-              subsurface_scale: {value: 1.000000},
-              subsurface_anisotropy: {value: 0.000000},
-              sheen: {value: 0.000000},
-              sheen_color: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
-              sheen_roughness: {value: 0.300000},
-              coat: {value: 0.000000},
-              coat_color: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
-              coat_roughness: {value: 0.100000},
-              coat_anisotropy: {value: 0.000000},
-              coat_rotation: {value: 0.000000},
-              coat_IOR: {value: 1.500000},
-              coat_affect_color: {value: 0.000000},
-              coat_affect_roughness: {value: 0.000000},
-              thin_film_thickness: {value: 0.000000},
-              thin_film_IOR: {value: 1.500000},
-              emission: {value: 0.000000},
-              emission_color: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
-              opacity: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
-              thin_walled: {value: false},
-
-              burley_brdf1_weight: {value: 1.0},
-              burley_brdf1_color: {value: new THREE.Vector3(0.6, 0.6, 0.6)},
-              burley_brdf1_roughness: {value: 0.2},
-
-              u_numActiveLightSources: {value: 1},
-              u_lightData: {value: [ lightData ]},
-
-              u_envMatrix: {value: new THREE.Matrix4().makeRotationY(Math.PI)},
-              u_envRadiance: {value: radianceTexture},
-              u_envRadianceMips: {value: 1},
-              u_envRadianceSamples: {value: 16},
-              u_envIrradiance: {value: irradianceTexture},
-
-              u_viewPosition: new THREE.Uniform( new THREE.Vector3() ),
-
-              u_worldMatrix: new THREE.Uniform( new THREE.Matrix4() ),
-              u_viewProjectionMatrix: new THREE.Uniform( new THREE.Matrix4() ),
-              u_worldInverseTransposeMatrix: new THREE.Uniform( new THREE.Matrix4() )
-            }
-        });
         const material = new THREE.RawShaderMaterial({
             uniforms: uniforms,
             vertexShader: vShader,
@@ -316,7 +331,9 @@ function init() {
 
     }).then(() => {
         animate();
-    })
+    }).catch(err => {
+      console.error(mx.getExceptionMessage(err));
+    }) 
 
 }
 

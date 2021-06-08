@@ -16,6 +16,7 @@ module.exports = {
         { from: "../../../resources/Geometry/shaderball.obj" },
         { from: "../../../build/source/JsMaterialX/JsMaterialX.wasm" },
         { from: "../../../build/source/JsMaterialX/JsMaterialX.js" },
+        { from: "../../../build/source/JsMaterialX/JsMaterialX.data" },
       ],
     }),
   ],

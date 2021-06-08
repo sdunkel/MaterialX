@@ -1,10 +1,10 @@
 #include "../helpers.h"
+#include <MaterialXGenGlsl/GlslShaderGenerator.h>
 #include <MaterialXGenEssl/EsslShaderGenerator.h>
 #include <MaterialXGenShader/DefaultColorManagementSystem.h>
 #include <MaterialXFormat/Util.h>
 #include <MaterialXGenShader/Shader.h>
 #include <MaterialXGenShader/ShaderStage.h>
-
 
 #include <iostream>
 
@@ -21,7 +21,7 @@ void initContext(mx::GenContext& context, mx::FileSearchPath searchPath, mx::Doc
     {
         context.registerSourceCodeSearchPath(path / "libraries");
     }
-
+ 
     // Initialize color management.
     mx::DefaultColorManagementSystemPtr cms = mx::DefaultColorManagementSystem::create(context.getShaderGenerator().getTarget());
     cms->loadLibrary(stdLib);
@@ -35,21 +35,20 @@ void initContext(mx::GenContext& context, mx::FileSearchPath searchPath, mx::Doc
     context.getOptions().targetDistanceUnit = "meter";
 }
 
-void loadStandardLibraries(mx::GenContext& context)
+mx::DocumentPtr loadStandardLibraries(mx::GenContext& context)
 {
     mx::DocumentPtr stdLib;
     mx::LinearUnitConverterPtr _distanceUnitConverter;
     mx::StringVec _distanceUnitOptions;
     mx::UnitConverterRegistryPtr unitRegistry;
-    mx::FilePathVec libraryFolders;
+    mx::FilePathVec libraryFolders = { "libraries" };
     mx::FileSearchPath searchPath;
+    searchPath.append("/");
 
     // Initialize the standard library.
     try
     {
-        std::cout << "loadStandardLibraries: createDocument" << std::endl;
         stdLib = mx::createDocument();
-        std::cout << "loadStandardLibraries: loadCoreLibraries" << std::endl;
         mx::StringSet _xincludeFiles = mx::loadCoreLibraries(libraryFolders, searchPath, stdLib);
         if (_xincludeFiles.empty())
         {
@@ -59,21 +58,17 @@ void loadStandardLibraries(mx::GenContext& context)
     catch (std::exception& e)
     {
         std::cerr << "Failed to load standard data libraries: " << e.what() << std::endl;
-        return;
+        return nullptr;
     }
 
-    std::cout << "loadStandardLibraries: _distanceUnitConverter" << std::endl;
     // Initialize unit management.
     mx::UnitTypeDefPtr distanceTypeDef = stdLib->getUnitTypeDef("distance");
     _distanceUnitConverter = mx::LinearUnitConverter::create(distanceTypeDef);
-    std::cout << "loadStandardLibraries: addUnitConverter1" << std::endl;
     unitRegistry->addUnitConverter(distanceTypeDef, _distanceUnitConverter);
     mx::UnitTypeDefPtr angleTypeDef = stdLib->getUnitTypeDef("angle");
     mx::LinearUnitConverterPtr angleConverter = mx::LinearUnitConverter::create(angleTypeDef);
-    std::cout << "loadStandardLibraries: addUnitConverter2" << std::endl;
     unitRegistry->addUnitConverter(angleTypeDef, angleConverter);
 
-    std::cout << "loadStandardLibraries: getUnitScale" << std::endl;
     // Create the list of supported distance units.
     auto unitScales = _distanceUnitConverter->getUnitScale();
     _distanceUnitOptions.resize(unitScales.size());
@@ -85,77 +80,33 @@ void loadStandardLibraries(mx::GenContext& context)
 
     initContext(context,searchPath, stdLib, unitRegistry);
 
+    return stdLib;
 }
-/*
-ems::val getUniforms(mx::ShaderStage& stage) {
-    ems::val result = ems::val::object();
-    for (const auto& it : stage.getUniformBlocks())
+
+std::string getUniformValues(mx::EsslShaderGenerator& self, mx::TypedElementPtr elem, mx::GenContext& context) {
+    mx::XmlReadOptions readOptions;
+    readOptions.readXIncludeFunction = [](mx::DocumentPtr doc, const mx::FilePath& filename,
+                                          const mx::FileSearchPath& searchPath, const mx::XmlReadOptions* options)
     {
-        const mx::VariableBlock& uniforms = *it.second;
-        if (!uniforms.empty())
+        mx::FilePath resolvedFilename = searchPath.find(filename);
+        if (resolvedFilename.exists())
         {
-            for (size_t i=0; i<uniforms.size(); ++i)
-            {
-                auto variable = uniforms[i];
-                std::string str;
-                // A file texture input needs special handling on GLSL
-                if (variable->getType() == mx::Type::FILENAME)
-                {
-                    // Samplers must always be uniforms
-                    str += "sampler2D " + variable->getVariable();
-                }
-                else
-                {
-                    str += "\"" + variable->getVariable() + "\": {";
-                    //tokenSubstitution(_tokenSubstitutions, str);
-                    str += "\"type\": \"" + _syntax->getTypeName(variable->getType()) + "\"";
-                  
-                    if (variable->getValue()) {
-                        str +=  ", \"value\": ";
-                        if (variable->getType()->isAggregate())
-                            str += "[";
-                        str +=  variable->getValue()->getValueString();
-                        if (variable->getType()->isAggregate())
-                            str += "]";
-                    }
-                    //std::cout << str << std::endl;
-                    result += str + " },\n";
-                }
-            }
+            readFromXmlFile(doc, resolvedFilename, searchPath, options);
         }
-    }
+        else
+        {
+            std::cerr << "Include file not found: " << filename.asString() << std::endl;
+        }
+    };
 
-    return result;
-}
-}
-*/
-
-std::string getUniformValues(mx::EsslShaderGenerator& self, mx::TypedElementPtr elem) {
-    std::cout << "context generating" << std::endl;
-    mx::GenContext context(mx::EsslShaderGenerator::create());
-    std::cout << "context generated" << std::endl;
-    loadStandardLibraries(context);
-    
-    /*mx::StringVec renderablePaths;
-    std::vector<mx::TypedElementPtr> elems;
-    std::vector<mx::NodePtr> materialNodes;
-    mx::findRenderableElements(doc, elems);
-
-                MaterialPtr mat = Material::create();
-                mat->setDocument(doc);
-                mat->setElement(typedElem);
-                mat->setMaterialNode(materialNodes[i]);
-                newMaterials.push_back(mat);
-
-    elem->getNamePath()*/
-    mx::EsslShaderGenerator& esslGenerator = static_cast<mx::EsslShaderGenerator&>(context.getShaderGenerator());
     mx::ShaderPtr shader = self.generate(elem->getNamePath(), elem, context);
 
     mx::ShaderStage& vs = shader->getStage(mx::Stage::VERTEX);
     mx::ShaderStage& ps = shader->getStage(mx::Stage::PIXEL);
+
     std::string uniforms = "{";
-    uniforms += esslGenerator.getUniformValues(vs);
-    uniforms += esslGenerator.getUniformValues(ps);
+    uniforms += self.getUniformValues(vs);
+    uniforms += self.getUniformValues(ps);
     uniforms += "}";
 
     return uniforms;
@@ -163,9 +114,26 @@ std::string getUniformValues(mx::EsslShaderGenerator& self, mx::TypedElementPtr 
 
 EMSCRIPTEN_BINDINGS(EsslShaderGenerator)
 {
-    ems::class_<mx::EsslShaderGenerator>("EsslShaderGenerator")
-        .constructor<>()
+    ems::class_<mx::Shader>("Shader")
+        .smart_ptr<std::shared_ptr<mx::Shader>>("ShaderPtr")
+        .function("getSourceCode", &mx::Shader::getSourceCode);
+        ;
+
+    ems::class_<mx::GenContext>("GenContext")
+        .constructor<mx::ShaderGeneratorPtr>()
+        .smart_ptr<std::shared_ptr<mx::GenContext>>("GenContextPtr")
+        ;
+
+    ems::class_<mx::ShaderGenerator>("ShaderGenerator")
+        .smart_ptr<std::shared_ptr<mx::ShaderGenerator>>("ShaderGeneratorPtr")
+        .function("generate", &mx::ShaderGenerator::generate)
+        ;
+
+    ems::class_<mx::EsslShaderGenerator, ems::base<mx::ShaderGenerator>>("EsslShaderGenerator")
+        .smart_ptr_constructor("EsslShaderGenerator", &std::make_shared<mx::EsslShaderGenerator>)
         .function("getUniformValues", &getUniformValues)
         ;
+
+    ems::function("loadStandardLibraries", &loadStandardLibraries);
 }
 
