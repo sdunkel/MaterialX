@@ -6,7 +6,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
-import { Uniform } from 'three';
+import { Matrix4, Uniform } from 'three';
 
 let camera, scene, model, renderer, composer, controls, uniforms, mx;
 
@@ -105,6 +105,7 @@ function toArray(value, dimension) {
     outValue = value;
   else {
     outValue = []; 
+    value = value ? value : 0.0;
     for(let i = 0; i < dimension; ++i)
       outValue.push(value);
   }
@@ -213,11 +214,10 @@ function init() {
         new Promise(resolve => hdrloader.setDataType(THREE.FloatType).load('san_giuseppe_bridge_split.hdr', resolve)),
         new Promise(resolve => hdrloader.setDataType(THREE.FloatType).load('irradiance/san_giuseppe_bridge_split.hdr', resolve)),
         new Promise(resolve => objLoader.load('shaderball.obj', resolve)),
-        new Promise(resolve => fileloader.load('shader-frag.glsl', resolve)),
-        new Promise(resolve => fileloader.load('shader-vert.glsl', resolve)),
         new Promise(function (resolve) { MaterialX().then((module) => { resolve(module.getMaterialX()); }); }),
         new Promise(resolve => fileloader.load('material.mtlx', resolve))
-    ]).then(([radianceTexture, irradianceTexture, obj, fShader, vShader, mx, mtlxMaterial]) => {
+    ]).then(([radianceTexture, irradianceTexture, obj, mxIn, mtlxMaterial]) => {
+        let fShader, vShader;
         mx = mxIn;
         let doc = mx.createDocument();
         
@@ -225,77 +225,23 @@ function init() {
         let genContext = new mx.GenContext(gen);
         let stdlib = mx.loadStandardLibraries(genContext);
         
-        mx.readFromXmlString(doc, mtlxMaterial);
         doc.importLibrary(stdlib);        
-
-        let shader = gen.generate(doc.getNodeGraphs()[0].getNodes()[0].getNamePath(), doc.getNodeGraphs()[0].getNodes()[0], genContext);
-
-        fShader = shader.getSourceCode("pixel");
-        vShader = shader.getSourceCode("vertex");
+        mx.readFromXmlString(doc, mtlxMaterial);
         
-        console.log("uniforms: ", gen.getUniformValues(doc.getNodeGraphs()[0].getNodes()[0], genContext));
-        let uniforms = {};//toThreeUniforms(JSON.parse(uniformsJSON));
+        let elem = mx.findRenderableElement(doc);
+        console.log("Generating shader for ", elem.getNamePath());
+        let shader = gen.generate(elem.getNamePath(), elem, genContext);
+
+        fShader = shader.getSourceCode("pixel");       
+        vShader = shader.getSourceCode("vertex");
+
+        let uniformsJSON = gen.getUniformValues(elem, genContext);
+        let uniforms = toThreeUniforms(JSON.parse(uniformsJSON));
         Object.assign(uniforms, { 
           time: { value: 0.0 },
 
-          base: {value: 1.000000},
-          base_color: {value: new THREE.Vector3(0.800000, 0.800000, 0.800000)},
-          diffuse_roughness: {value: 0.000000},
-          metalness: {value: 0.000000},
-          specular: {value: 1.000000},
-          specular_color: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
-          specular_roughness: {value: 0.200000},
-          specular_IOR: {value: 1.500000},
-          specular_anisotropy: {value: 0.000000},
-          specular_rotation: {value: 0.000000},
-          transmission: {value: 0.000000},
-          transmission_color: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
-          transmission_depth: {value: 0.000000},
-          transmission_scatter: {value: new THREE.Vector3(0.000000, 0.000000, 0.000000)},
-          transmission_scatter_anisotropy: {value: 0.000000},
-          transmission_dispersion: {value: 0.000000},
-          transmission_extra_roughness: {value: 0.000000},
-          subsurface: {value: 0.000000},
-          subsurface_color: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
-          subsurface_radius: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
-          subsurface_scale: {value: 1.000000},
-          subsurface_anisotropy: {value: 0.000000},
-          sheen: {value: 0.000000},
-          sheen_color: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
-          sheen_roughness: {value: 0.300000},
-          coat: {value: 0.000000},
-          coat_color: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
-          coat_roughness: {value: 0.100000},
-          coat_anisotropy: {value: 0.000000},
-          coat_rotation: {value: 0.000000},
-          coat_IOR: {value: 1.500000},
-          coat_affect_color: {value: 0.000000},
-          coat_affect_roughness: {value: 0.000000},
-          thin_film_thickness: {value: 0.000000},
-          thin_film_IOR: {value: 1.500000},
-          emission: {value: 0.000000},
-          emission_color: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
-          opacity: {value: new THREE.Vector3(1.000000, 1.000000, 1.000000)},
-          thin_walled: {value: false},
-
-          burley_brdf1_weight: {value: 1.0},
-          burley_brdf1_color: {value: new THREE.Vector3(0.6, 0.6, 0.6)},
-          burley_brdf1_roughness: {value: 0.2},
-
-          u_numActiveLightSources: {value: 1},
-          u_lightData: {value: [ lightData ]},
-
-          u_envMatrix: {value: new THREE.Matrix4().makeRotationY(Math.PI)},
           u_envRadiance: {value: radianceTexture},
-          u_envRadianceMips: {value: 1},
-          u_envRadianceSamples: {value: 16},
           u_envIrradiance: {value: irradianceTexture},
-
-          u_viewPosition: new THREE.Uniform( new THREE.Vector3() ),
-
-          u_worldMatrix: new THREE.Uniform( new THREE.Matrix4() ),
-          u_viewProjectionMatrix: new THREE.Uniform( new THREE.Matrix4() ),
-          u_worldInverseTransposeMatrix: new THREE.Uniform( new THREE.Matrix4() )
         });
 
         // RGBELoader sets flipY to true by default
@@ -355,7 +301,7 @@ function animate() {
           uniforms.u_viewPosition.value = camera.getWorldPosition(worldViewPos);
           uniforms.u_worldMatrix.value = child.matrixWorld;
           uniforms.u_viewProjectionMatrix.value = viewProjMat.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
-          uniforms.u_worldInverseTransposeMatrix.value.setFromMatrix3(normalMat.getNormalMatrix(child.matrixWorld));
+          uniforms.u_worldInverseTransposeMatrix.value = new Matrix4().setFromMatrix3(normalMat.getNormalMatrix(child.matrixWorld)).elements;
         }
       }
     });

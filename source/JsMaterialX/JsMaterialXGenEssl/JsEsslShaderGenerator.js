@@ -4,4 +4,5 @@ addWrapper(function(Module, api) {
     api.GenContext = Module.GenContext;
     api.Shader = Module.Shader;
     api.loadStandardLibraries = Module.loadStandardLibraries;
+    api.findRenderableElement = Module.findRenderableElement;
 });

@@ -5,6 +5,7 @@
 #include <MaterialXFormat/Util.h>
 #include <MaterialXGenShader/Shader.h>
 #include <MaterialXGenShader/ShaderStage.h>
+#include <MaterialXGenShader/Util.h>
 
 #include <iostream>
 
@@ -21,6 +22,12 @@ void initContext(mx::GenContext& context, mx::FileSearchPath searchPath, mx::Doc
     {
         context.registerSourceCodeSearchPath(path / "libraries");
     }
+
+    context.getOptions().targetColorSpaceOverride = "lin_rec709";
+    context.getOptions().fileTextureVerticalFlip = false;
+    context.getOptions().hwMaxActiveLightSources = 1;
+    context.getOptions().hwSpecularEnvironmentMethod = mx::SPECULAR_ENVIRONMENT_FIS;
+    context.getOptions().hwDirectionalAlbedoMethod = mx::DIRECTIONAL_ALBEDO_CURVE_FIT;
  
     // Initialize color management.
     mx::DefaultColorManagementSystemPtr cms = mx::DefaultColorManagementSystem::create(context.getShaderGenerator().getTarget());
@@ -106,10 +113,40 @@ std::string getUniformValues(mx::EsslShaderGenerator& self, mx::TypedElementPtr 
 
     std::string uniforms = "{";
     uniforms += self.getUniformValues(vs);
-    uniforms += self.getUniformValues(ps);
+    std::string vsString = self.getUniformValues(ps);
+    uniforms += vsString.substr(0, vsString.size()-2);
     uniforms += "}";
 
     return uniforms;
+}
+
+mx::ElementPtr findRenderableElement(mx::DocumentPtr doc) {
+    mx::StringVec renderablePaths;
+    std::vector<mx::TypedElementPtr> elems;
+    mx::findRenderableElements(doc, elems);
+
+    for (mx::TypedElementPtr elem : elems)
+    {
+        mx::TypedElementPtr renderableElem = elem;
+        mx::NodePtr node = elem->asA<mx::Node>();
+        if (node && node->getType() == mx::MATERIAL_TYPE_STRING)
+        {
+            std::unordered_set<mx::NodePtr> shaderNodes = getShaderNodes(node, mx::SURFACE_SHADER_TYPE_STRING);
+            if (!shaderNodes.empty())
+            {
+                renderableElem = *shaderNodes.begin();
+            }
+        }
+
+        const auto& renderablePath = renderableElem->getNamePath();
+        mx::ElementPtr elem2 = doc->getDescendant(renderablePath);
+        mx::TypedElementPtr typedElem = elem2 ? elem2->asA<mx::TypedElement>() : nullptr;
+        if (typedElem) {
+            return elem2;
+        }
+    }
+
+    return nullptr;
 }
 
 EMSCRIPTEN_BINDINGS(EsslShaderGenerator)
@@ -135,5 +172,6 @@ EMSCRIPTEN_BINDINGS(EsslShaderGenerator)
         ;
 
     ems::function("loadStandardLibraries", &loadStandardLibraries);
+    ems::function("findRenderableElement", &findRenderableElement);
 }
 
