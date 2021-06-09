@@ -223,6 +223,7 @@ function init() {
         obj.traverse((child) => {
             if (child.isMesh) {
               generateTangents(child.geometry);
+              child.geometry.attributes.uv_0 = child.geometry.attributes.uv
               child.material = material;
             }
         });
