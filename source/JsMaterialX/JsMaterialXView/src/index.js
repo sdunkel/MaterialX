@@ -116,6 +116,28 @@ function toArray(value, dimension) {
   return outValue;
 }
 
+function getJadeDoc(mx) {
+  const jadeDoc = mx.createDocument();
+  const writeOptions = new mx.XmlWriteOptions();
+  const ssName = 'SR_jade';
+  const ssNode = jadeDoc.addChildOfCategory('standard_surface', ssName);
+  ssNode.setType('surfaceshader');
+  ssNode.addInput('base').setValueFloat(0.5);
+  ssNode.addInput('base_color').setValueColor3(new mx.Color3(0.0603, 0.4398, 0.1916));
+  ssNode.addInput('specular_roughness').setValueFloat(0.25);
+  ssNode.addInput('specular_IOR').setValueFloat(2.418);
+  ssNode.addInput('specular_anisotropy').setValueFloat(0.5);
+  ssNode.addInput('subsurface').setValueFloat(0.4);
+  ssNode.addInput('subsurface_color').setValueColor3(new mx.Color3(0.0603, 0.4398, 0.1916));
+  const smNode = jadeDoc.addChildOfCategory('surfacematerial', 'Jade');
+  smNode.setType('material');
+  const shaderElement = smNode.addInput('surfaceshader');
+  shaderElement.setType('surfaceshader');
+  shaderElement.setNodeName(ssName);
+  //console.log(mx.writeToXmlString(jadeDoc, writeOptions));
+  return jadeDoc;
+}
+
 function toThreeUniform(type, value) {
   let outValue;  
   switch(type) {
@@ -222,7 +244,7 @@ function init() {
     ]).then(([radianceTexture, irradianceTexture, obj, mxIn, mtlxMaterial]) => {
         let fShader, vShader;
         mx = mxIn;
-        let doc = mx.createDocument();
+        let doc = getJadeDoc(mx);//mx.createDocument();
         
         let gen = new mx.EsslShaderGenerator();
         let genContext = new mx.GenContext(gen);
