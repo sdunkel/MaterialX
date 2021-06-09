@@ -14,6 +14,9 @@ let normalMat = new THREE.Matrix3();
 let viewProjMat = new THREE.Matrix4();
 let worldViewPos = new THREE.Vector3();
 
+const fileParam = new URLSearchParams(document.location.search).get("file");
+let materialFilename = fileParam ? fileParam : 'material.mtlx'
+
 init();
 
 /**
@@ -215,7 +218,7 @@ function init() {
         new Promise(resolve => hdrloader.setDataType(THREE.FloatType).load('irradiance/san_giuseppe_bridge_split.hdr', resolve)),
         new Promise(resolve => objLoader.load('shaderball.obj', resolve)),
         new Promise(function (resolve) { MaterialX().then((module) => { resolve(module.getMaterialX()); }); }),
-        new Promise(resolve => fileloader.load('material.mtlx', resolve))
+        new Promise(resolve => fileloader.load(materialFilename, resolve))
     ]).then(([radianceTexture, irradianceTexture, obj, mxIn, mtlxMaterial]) => {
         let fShader, vShader;
         mx = mxIn;
