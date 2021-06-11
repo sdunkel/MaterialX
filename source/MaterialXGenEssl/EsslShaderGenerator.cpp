@@ -7,6 +7,7 @@
 #include <MaterialXGenEssl/EsslSyntax.h>
 
 #include <MaterialXGenShader/Nodes/HwImageNode.h>
+#include <MaterialXGenShader/Util.h>
 
 namespace MaterialX
 {
@@ -114,6 +115,47 @@ END_SHADER_STAGE(stage, Stage::PIXEL)
 const string EsslShaderGenerator::getVertexDataPrefix(const VariableBlock&) const
 {
     return "";
+}
+
+string EsslShaderGenerator::getUniformValues(ShaderStage& stage) const {
+    string result;
+    for (const auto& it : stage.getUniformBlocks())
+    {
+        const VariableBlock& uniforms = *it.second;
+        if (!uniforms.empty())
+        {
+            for (size_t i=0; i<uniforms.size(); ++i)
+            {
+                auto variable = uniforms[i];
+                string str;
+                // A file texture input needs special handling on GLSL
+                if (variable->getType() == Type::FILENAME)
+                {
+                    // Samplers must always be uniforms
+                    str += "sampler2D " + variable->getVariable();
+                }
+                else
+                {
+                    str += "\"" + variable->getVariable() + "\": {";
+                    tokenSubstitution(_tokenSubstitutions, str);
+                    str += "\"type\": \"" + _syntax->getTypeName(variable->getType()) + "\"";
+                  
+                    if (variable->getValue()) {
+                        str +=  ", \"value\": ";
+                        if (variable->getType()->isAggregate())
+                            str += "[";
+                        str +=  variable->getValue()->getValueString();
+                        if (variable->getType()->isAggregate())
+                            str += "]";
+                    }
+                    //std::cout << str << std::endl;
+                    result += str + " },\n";
+                }
+            }
+        }
+    }
+
+    return result;
 }
 
 }

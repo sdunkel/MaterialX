@@ -113,9 +113,3 @@ add_custom_command(TARGET MaterialXView POST_BUILD
 add_custom_command(TARGET MaterialXView POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy_directory
 	${CMAKE_CURRENT_SOURCE_DIR}/../../resources ${CMAKE_CURRENT_BINARY_DIR}/resources)
-
-if(MATERIALX_BUILD_GEN_ESSL)
-    add_custom_command(TARGET MaterialXView POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../source/MaterialXGenEssl/libraries ${CMAKE_CURRENT_BINARY_DIR}/libraries)
-endif()

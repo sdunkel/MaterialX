@@ -32,6 +32,8 @@ class EsslShaderGenerator : public GlslShaderGenerator
 
     const string getVertexDataPrefix(const VariableBlock& vertexData) const override;
 
+    string getUniformValues(ShaderStage& stage) const;
+
     /// Unique identifier for this generator target
     static const string TARGET;
     static const string VERSION;
