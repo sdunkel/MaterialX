@@ -235,8 +235,12 @@ function init() {
         // Get GL ES shaders and uniform values
         let fShader = shader.getSourceCode("pixel");       
         let vShader = shader.getSourceCode("vertex");
-        let uniforms = toThreeUniforms(JSON.parse(gen.getUniformValues(elem, genContext)));
-        Object.assign(uniforms, { 
+        let uniforms = {
+          ...toThreeUniforms(JSON.parse(shader.getUniformValues("vertex"))),
+          ...toThreeUniforms(JSON.parse(shader.getUniformValues("pixel")))
+        }
+
+        Object.assign(uniforms, {
           time: { value: 0.0 },
           u_numActiveLightSources: {value: 1},
           u_lightData: {value: [ lightData ]},

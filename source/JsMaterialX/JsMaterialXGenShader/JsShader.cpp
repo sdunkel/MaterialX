@@ -9,6 +9,7 @@ EMSCRIPTEN_BINDINGS(Shader)
 {
     ems::class_<mx::Shader>("Shader")
         .smart_ptr<std::shared_ptr<mx::Shader>>("ShaderPtr")
-        .function("getSourceCode", &mx::Shader::getSourceCode);
+        .function("getSourceCode", &mx::Shader::getSourceCode)
+        .function("getUniformValues", &mx::Shader::getUniformValues);
         ;
 }

@@ -8,21 +8,6 @@
 namespace ems = emscripten;
 namespace mx = MaterialX;
 
-std::string getUniformValues(mx::EsslShaderGenerator& self, mx::TypedElementPtr elem, mx::GenContext& context) {
-    mx::ShaderPtr shader = self.generate(elem->getNamePath(), elem, context);
-
-    mx::ShaderStage& vs = shader->getStage(mx::Stage::VERTEX);
-    mx::ShaderStage& ps = shader->getStage(mx::Stage::PIXEL);
-
-    std::string uniforms = "{";
-    uniforms += self.getUniformValues(vs);
-    std::string vsString = self.getUniformValues(ps);
-    uniforms += vsString.substr(0, vsString.size()-2);
-    uniforms += "}";
-
-    return uniforms;
-}
-
 mx::ElementPtr findRenderableElement(mx::DocumentPtr doc) {
     mx::StringVec renderablePaths;
     std::vector<mx::TypedElementPtr> elems;
@@ -56,7 +41,6 @@ EMSCRIPTEN_BINDINGS(EsslShaderGenerator)
 {
     ems::class_<mx::EsslShaderGenerator, ems::base<mx::ShaderGenerator>>("EsslShaderGenerator")
         .smart_ptr_constructor("EsslShaderGenerator", &std::make_shared<mx::EsslShaderGenerator>)
-        .function("getUniformValues", &getUniformValues)
         ;
 
     ems::function("findRenderableElement", &findRenderableElement);
