@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { traverse } from './testHelpers';
-import Module from './_build/JsMaterialX.js';
+import Module from './_build/JsMaterialXCore.js';
 
 describe('Traversal', () => {
     let mx;

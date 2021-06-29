@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import Module from './_build/JsMaterialX.js';
+import Module from './_build/JsMaterialXCore.js';
 import { getMtlxStrings } from './testHelpers';
 
 const _libraryFilenames = ['stdlib_defs.mtlx', 'stdlib_ng.mtlx', 'osl/stdlib_osl_impl.mtlx'];
