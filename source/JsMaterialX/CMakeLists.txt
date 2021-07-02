@@ -29,8 +29,10 @@ set(FORMAT_DEPS
     ${OUTPUT_FORMAT}JsXmlExport.cpp)
 
 set(GENSHADER_DEPS ${OUTPUT_GENSHADER}JsGenContext.cpp
+    ${OUTPUT_GENSHADER}JsGenOptions.cpp
     ${OUTPUT_GENSHADER}JsShader.cpp
-    ${OUTPUT_GENSHADER}JsShaderGenerator.cpp)
+    ${OUTPUT_GENSHADER}JsShaderGenerator.cpp
+    ${OUTPUT_GENSHADER}JsUtil.cpp)
 
 set(GENESSL_DEPS ${OUTPUT_GENESSL}JsEsslShaderGenerator.cpp)
 
